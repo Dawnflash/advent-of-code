@@ -4,7 +4,6 @@ import qualified Data.Vector as V
 import Data.Char ( ord )
 import Data.Maybe ( fromJust, isNothing )
 import Lib
-    ( Point2D, Direction2D(..), neigh2D, point2DFromInt, point2DToInt )
 
 type Forest = V.Vector Int
 
@@ -32,7 +31,7 @@ directionalAnalysis f dim@(w, _) fn p = [
     refHeight = f V.! point2DToInt w p
 
 isVisibleDir :: Direction2D -> Forest -> Point2D -> Int -> Point2D -> Bool
-isVisibleDir dir f dim@(w, _) refHeight p = case neigh2D dir dim p of
+isVisibleDir dir f dim@(w, _) refHeight p = case step2DBounded dir dim p of
   Just np -> refHeight > f V.! point2DToInt w np && isVisibleDir dir f dim refHeight np
   Nothing -> True
 
@@ -42,6 +41,6 @@ viewDistanceDir dir f dim@(w, _) refHeight p
   | nh >= refHeight = 1
   | otherwise = 1 + viewDistanceDir dir f dim refHeight jnp
   where
-    np = neigh2D dir dim p
+    np = step2DBounded dir dim p
     jnp = fromJust np
     nh = f V.! point2DToInt w jnp
