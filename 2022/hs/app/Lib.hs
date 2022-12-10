@@ -1,5 +1,8 @@
 module Lib where
 
+import Data.Either (rights)
+import qualified Text.Parsec as P
+
 splitWhen :: (a -> Bool) -> [a] -> [[a]]
 splitWhen p s = case dropWhile p s of
   [] -> []
@@ -57,3 +60,8 @@ print2D v = mapM_ (printL [minx..maxx]) [miny..maxy]
     printC x
       | x `elem` v = 'x'
       | otherwise = '.'
+
+-- parsing
+
+parseLines :: P.Parsec String () a -> [String] -> [a]
+parseLines p = rights . map (P.parse p "")
