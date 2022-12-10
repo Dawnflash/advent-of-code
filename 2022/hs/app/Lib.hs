@@ -58,8 +58,8 @@ print2D v = mapM_ (printL [minx..maxx]) [miny..maxy]
     printL (x:xs) y = putChar (printC (x, y)) >> printL xs y
     printC :: Point2D -> Char
     printC x
-      | x `elem` v = 'x'
-      | otherwise = '.'
+      | x `elem` v = '█'
+      | otherwise = '░'
 
 -- parsing
 
