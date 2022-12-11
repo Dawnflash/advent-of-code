@@ -1,6 +1,6 @@
 module Lib where
 
-import Data.Either (rights)
+import Data.Either (rights, fromRight)
 import qualified Text.Parsec as P
 
 splitWhen :: (a -> Bool) -> [a] -> [[a]]
