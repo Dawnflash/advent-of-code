@@ -3,6 +3,7 @@ module S7 where
 import qualified Data.Tree as T
 import qualified Text.Parsec as P
 import Data.Either (rights)
+import Lib (ParserT)
 
 -- name and size, don't store files individually yet
 type Dir = T.Tree (String, Int)
@@ -53,7 +54,7 @@ makeDir dir cs = snd $ makeDir' dir cs
       OFile _ n -> makeDir' (resizeDir n dir) cs
     makeDir' dir _ = ([], dir)
 
-parseLine :: P.Parsec String () Cmd
+parseLine :: ParserT Cmd
 parseLine = pCmd P.<|> pDir P.<|> pFile
   where
     pCmd = P.string "$ " >> (pCmdLs P.<|> pCmdCd)

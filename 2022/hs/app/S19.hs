@@ -1,6 +1,6 @@
 module S19 where
 
-import Lib (parseLines)
+import Lib (parseLines, ParserT)
 import qualified Text.Parsec as P
 
 
@@ -10,5 +10,5 @@ main input = do
 
   print pInput
 
-parseLine :: P.Parsec String () String
+parseLine :: ParserT String
 parseLine = P.many P.anyChar

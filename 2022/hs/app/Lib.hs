@@ -3,6 +3,8 @@ module Lib where
 import Data.Either (rights, fromRight)
 import qualified Text.Parsec as P
 
+type ParserT a = P.Parsec String () a
+
 splitWhen :: (a -> Bool) -> [a] -> [[a]]
 splitWhen p s = case dropWhile p s of
   [] -> []

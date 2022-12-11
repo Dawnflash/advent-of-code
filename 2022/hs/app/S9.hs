@@ -17,7 +17,7 @@ main input = do
   print $ S.size . snd $ foldl visitFold (replicate 2 (0, 0), S.fromList [(0, 0)]) pInputLines  -- part 1
   print $ S.size . snd $ foldl visitFold (replicate 10 (0, 0), S.fromList [(0, 0)]) pInputLines -- part 2
 
-parseLine :: P.Parsec String () Cmd
+parseLine :: ParserT Cmd
 parseLine = do
   d <- (P.char 'U' >> return DirUp) P.<|> (P.char 'D' >> return DirDown) P.<|> (P.char 'L' >> return DirLeft) P.<|> (P.char 'R' >> return DirRight)
   P.space

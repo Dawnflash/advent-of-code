@@ -31,7 +31,7 @@ parseCrates crates = foldl parseCrates' (V.replicate nslots "") crates
     maybeAdd (Just a) b = a : b
     maybeAdd _ b = b
 
-    parseSlots :: P.Parsec String () (V.Vector (Maybe Char))
+    parseSlots :: ParserT (V.Vector (Maybe Char))
     parseSlots = V.fromList <$> P.sepBy (pVoid P.<|> pCrate) P.space
       where
         pVoid = P.count 3 P.space >> return Nothing

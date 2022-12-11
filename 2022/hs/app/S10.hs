@@ -17,7 +17,7 @@ main input = do
   print $ sum $ signal cycles <$> p1Cycles              -- part 1
   print2D $ foldl draw [] $ zip [0..] $ V.toList cycles -- part 2
 
-parseLine :: P.Parsec String () Instr
+parseLine :: ParserT Instr
 parseLine = (P.string "noop" >> return Noop) P.<|> (P.string "addx " >> Addx . read <$> P.many P.anyChar)
 
 signal :: V.Vector State -> Int -> Int

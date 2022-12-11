@@ -54,10 +54,10 @@ run relief modulus = run' 0
             (Monkey a titems d twf ttf) = monkeys V.! tmi
 
 
-parseMonkeys :: P.Parsec String () (V.Vector MonkeyT)
+parseMonkeys :: ParserT (V.Vector MonkeyT)
 parseMonkeys = V.fromList <$> P.sepBy parseMonkey (P.char '\n')
   where
-    parseMonkey :: P.Parsec String () MonkeyT
+    parseMonkey :: ParserT MonkeyT
     parseMonkey = do
       P.string "Monkey "
       P.many P.digit -- discard the monkey ID
@@ -69,10 +69,10 @@ parseMonkeys = V.fromList <$> P.sepBy parseMonkey (P.char '\n')
       testF <- parseTestDecision
       return $ Monkey 0 items div op (\w -> if w `mod` div == 0 then testT else testF)
 
-    parseItems :: P.Parsec String () [WorryL]
+    parseItems :: ParserT [WorryL]
     parseItems = P.string "  Starting items: " >> P.sepBy (read <$> P.many P.digit) (P.string ", ") <* P.char '\n'
 
-    parseInspectOp :: P.Parsec String () (WorryL -> WorryL)
+    parseInspectOp :: ParserT (WorryL -> WorryL)
     parseInspectOp = do
       P.string "  Operation: new = old "
       op <- parseInspectOpElem
@@ -84,16 +84,16 @@ parseMonkeys = V.fromList <$> P.sepBy parseMonkey (P.char '\n')
         parseInspectOp' OpAdd (OpConst a) = (+ a)
         parseInspectOp' OpMult (OpConst a) = (* a)
 
-    parseInspectOpElem :: P.Parsec String () MonkeyOp
+    parseInspectOpElem :: ParserT MonkeyOp
     parseInspectOpElem = (P.char '*' >> return OpMult)
       P.<|> (P.char '+' >> return OpAdd)
       P.<|> (P.string "old" >> return OpVar)
       P.<|> (OpConst . read <$> P.many P.digit)
 
-    parseDivisor :: P.Parsec String () MonkeyModulus
+    parseDivisor :: ParserT MonkeyModulus
     parseDivisor = P.string "  Test: divisible by " >> read <$> P.many P.digit <* P.char '\n'
 
-    parseTestDecision :: P.Parsec String () WorryL
+    parseTestDecision :: ParserT WorryL
     parseTestDecision = do
       P.string "    If "
       P.string "true" P.<|> P.string "false"
