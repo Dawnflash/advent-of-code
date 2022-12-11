@@ -2,37 +2,72 @@ module S11 where
 
 import Lib
 import qualified Text.Parsec as P
+import qualified Data.Vector as V
+import qualified Data.List as L
 import Data.Either (fromRight)
 
 type WorryL = Int
+type ActivityL = Int
 type MonkeyID = Int
+type MonkeyModulus = Int
 data MonkeyOp = OpConst WorryL | OpVar | OpAdd | OpMult
-data MonkeyT = Monkey [WorryL] (WorryL -> WorryL) (WorryL -> MonkeyID)
+data MonkeyT = Monkey ActivityL (V.Vector WorryL) MonkeyModulus (WorryL -> WorryL) (WorryL -> MonkeyID)
 
 instance Show MonkeyT where
-  show (Monkey l _ _) = "Monkey " ++ show l
+  show (Monkey i l _ _ _) = "Monkey <" ++ show i ++ "> " ++ show l
+
+monkeyActivity :: MonkeyT -> ActivityL
+monkeyActivity (Monkey a _ _ _ _) = a
+
+monkeyModulus :: MonkeyT -> MonkeyModulus
+monkeyModulus (Monkey _ _ d _ _) = d
 
 
 main :: String -> IO ()
 main input = do
-  let pInput = fromRight [] $ P.parse parseMonkeys "" input
+  let monkeys = fromRight V.empty $ P.parse parseMonkeys "" input
+  let modulus = foldl lcm 1 $ monkeyModulus <$> monkeys
 
-  print pInput
+  let i1 = iterate (run 3 modulus) monkeys !! 20
+  let i2 = iterate (run 1 modulus) monkeys !! 10000
 
-parseMonkeys :: P.Parsec String () [MonkeyT]
-parseMonkeys = P.sepBy parseMonkey $ P.char '\n'
+  print $ monkeyBusiness i1 -- part 1
+  print $ monkeyBusiness i2 -- part 2
+
+monkeyBusiness :: V.Vector MonkeyT -> ActivityL
+monkeyBusiness = product . take 2 . reverse . L.sort . fmap monkeyActivity . V.toList
+
+-- one iteration (relief = 1 for part 2)
+run :: Int -> MonkeyModulus -> V.Vector MonkeyT -> V.Vector MonkeyT
+run relief modulus = run' 0
+  where
+    run' n monkeys
+      | n >= V.length monkeys = monkeys
+      | otherwise = run' (n + 1) $ V.unsafeUpd (foldl runItem monkeys items) [(n, Monkey (a + V.length items) V.empty d wf tf)]
+      where
+        (Monkey a items d wf tf) = monkeys V.! n
+        runItem :: V.Vector MonkeyT -> WorryL -> V.Vector MonkeyT
+        runItem monkeys w = V.unsafeUpd monkeys [(tmi, Monkey a (V.snoc titems nw) d twf ttf)]
+          where
+            nw = (wf w `div` relief) `mod` modulus
+            tmi = tf nw
+            (Monkey a titems d twf ttf) = monkeys V.! tmi
+
+
+parseMonkeys :: P.Parsec String () (V.Vector MonkeyT)
+parseMonkeys = V.fromList <$> P.sepBy parseMonkey (P.char '\n')
   where
     parseMonkey :: P.Parsec String () MonkeyT
     parseMonkey = do
       P.string "Monkey "
       P.many P.digit -- discard the monkey ID
       P.string ":\n"
-      items <- parseItems
+      items <- V.fromList <$> parseItems
       op <- parseInspectOp
-      test <- parseTest
+      div <- parseDivisor
       testT <- parseTestDecision
       testF <- parseTestDecision
-      return $ Monkey items op $ (\t -> if t then testT else testF) . test
+      return $ Monkey 0 items div op (\w -> if w `mod` div == 0 then testT else testF)
 
     parseItems :: P.Parsec String () [WorryL]
     parseItems = P.string "  Starting items: " >> P.sepBy (read <$> P.many P.digit) (P.string ", ") <* P.char '\n'
@@ -55,8 +90,8 @@ parseMonkeys = P.sepBy parseMonkey $ P.char '\n'
       P.<|> (P.string "old" >> return OpVar)
       P.<|> (OpConst . read <$> P.many P.digit)
 
-    parseTest :: P.Parsec String () (WorryL -> Bool)
-    parseTest = P.string "  Test: divisible by " >> (\y x -> x `mod` y == 0) . read <$> P.many P.digit <* P.char '\n'
+    parseDivisor :: P.Parsec String () MonkeyModulus
+    parseDivisor = P.string "  Test: divisible by " >> read <$> P.many P.digit <* P.char '\n'
 
     parseTestDecision :: P.Parsec String () WorryL
     parseTestDecision = do
