@@ -2,6 +2,7 @@ module Lib where
 
 import Data.Either (rights, fromRight)
 import qualified Text.Parsec as P
+import Data.Maybe ( mapMaybe )
 
 type ParserT a = P.Parsec String () a
 
@@ -41,6 +42,9 @@ step2D d (x, y) = step2D' d
     step2D' DirDown = (x, y + 1)
     step2D' DirLeft = (x - 1, y)
     step2D' DirRight = (x + 1, y)
+
+neighbors2DBounded :: Point2D -> Point2D -> [Point2D]
+neighbors2DBounded dims p = mapMaybe (\d -> step2DBounded d dims p) [DirUp, DirDown, DirLeft, DirRight]
 
 isNeighbor2D :: Point2D -> Point2D -> Bool
 isNeighbor2D (x1, y1) (x2, y2) = abs (x1 - x2) < 2 && abs (y1 - y2) < 2
