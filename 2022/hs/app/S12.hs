@@ -46,7 +46,7 @@ bfs graph@(Graph w h verts) len curs target
 
 -- select suitable neighbors (indices)
 neighs :: GraphT -> Int -> S.Set Int
-neighs (Graph w h verts) cur = S.fromList $ filter suitable $ point2DToInt w <$> neighbors2DBounded (w, h) (point2DFromInt w cur)
+neighs (Graph w h verts) cur = S.fromList $ filter suitable $ point2DToInt w <$> filter (checkBounds0 (w, h)) (neighbors2D (point2DFromInt w cur))
   where
     (Vertex curH _) = verts V.! cur
     suitable i = let (Vertex h v) = verts V.! i in not v && h - curH < 2

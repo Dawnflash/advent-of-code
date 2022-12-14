@@ -31,16 +31,14 @@ directionalAnalysis f dim@(w, _) fn p = [
     refHeight = f V.! point2DToInt w p
 
 isVisibleDir :: Direction2D -> Forest -> Point2D -> Int -> Point2D -> Bool
-isVisibleDir dir f dim@(w, _) refHeight p = case step2DBounded dir dim p of
-  Just np -> refHeight > f V.! point2DToInt w np && isVisibleDir dir f dim refHeight np
-  Nothing -> True
+isVisibleDir dir f dim@(w, _) refHeight p = let np = step2D dir p in
+  not (checkBounds0 dim np) || (refHeight > f V.! point2DToInt w np && isVisibleDir dir f dim refHeight np)
 
 viewDistanceDir :: Direction2D -> Forest -> Point2D -> Int -> Point2D -> Int
 viewDistanceDir dir f dim@(w, _) refHeight p
-  | isNothing np = 0
+  | not (checkBounds0 dim np) = 0
   | nh >= refHeight = 1
-  | otherwise = 1 + viewDistanceDir dir f dim refHeight jnp
+  | otherwise = 1 + viewDistanceDir dir f dim refHeight np
   where
-    np = step2DBounded dir dim p
-    jnp = fromJust np
-    nh = f V.! point2DToInt w jnp
+    np = step2D dir p
+    nh = f V.! point2DToInt w np
