@@ -65,6 +65,8 @@ line2D (x1, y1) (x2, y2)
   | y1 == y2 = [(x, y1) | x <- [min x1 x2..max x1 x2]]
   | otherwise = [] -- no support for slanted lines
 
+distance2DManhattan :: Point2D -> Point2D -> Int
+distance2DManhattan (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
 
 print2D :: [Point2D] -> IO ()
 print2D v = mapM_ (printL [minx..maxx]) [miny..maxy]
@@ -87,5 +89,8 @@ print2DL w xs = print2D $ catMaybes $ zipWith fn [0..] xs
 
 -- parsing
 
-parseLines :: P.Parsec String () a -> [String] -> [a]
+parseLines :: ParserT a -> [String] -> [a]
 parseLines p = rights . map (P.parse p "")
+
+parseInt :: ParserT Int
+parseInt = read <$> (P.optional (P.char '-') >> P.many1 P.digit)
