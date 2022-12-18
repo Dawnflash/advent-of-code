@@ -57,15 +57,15 @@ prune start graph@(nodes, is) nid
           where
             newWt = aw + adj M.! i -- pruned node has link to this node
 
-maxSafe :: [Int] -> Int
-maxSafe [] = 0
-maxSafe a = maximum a
+maxSafe :: Int -> [Int] -> Int
+maxSafe d [] = d
+maxSafe _ a = maximum a
 
 -- dumb combinatorial explosion (cringe)
 maxpath :: Int -> Int -> Int -> Int -> Graph -> Int
 maxpath nclosed rem prev cur graph@(verts, is)
   | rem <= 1 || nclosed <= 0 = 0 -- nothing more to gain!
-  | otherwise = maxSafe $ evalMoves moves
+  | otherwise = maxSafe 0 $ evalMoves moves
   where
     execMove Open = pwr * (rem - 1) + maxpath (nclosed - 1) (rem - 1) cur cur (verts V.// [(cur, (0, adj))], is) -- close vertex
     execMove (Move (dest, w)) = maxpath nclosed (rem - w) cur dest graph
@@ -80,18 +80,18 @@ maxpath nclosed rem prev cur graph@(verts, is)
 -- 2785 (calculated) < 2800 < x < 3000
 -- dumb combinatorial explosion (cringe, with 2 actors, bounded by 1-actor optimum)
 maxpath2 :: Int -> Int -> Int -> Graph -> Int
-maxpath2 bound timeout start (verts, is) = maxpath2' 0 (M.size initOpens) timeout (start, start) (start, start) verts initOpens
+maxpath2 bound timeout start (verts, is) = maxpath2' 0 (S.size initOpens) timeout (start, start) (start, start) verts initOpens
   where
     -- sorted by powers, which are apparently unique (stimke)
-    initOpens = M.fromList [(pow, k) | k <- S.toList is, let pow = fst (verts V.! k), pow /= 0]
-    maxpath2' :: Int -> Int -> Int -> (Int, Int) -> (Int, Int) -> V.Vector Node -> M.Map Int Int -> Int
+    initOpens = S.fromList [pow | k <- S.toList is, let pow = fst (verts V.! k), pow /= 0]
+    maxpath2' :: Int -> Int -> Int -> (Int, Int) -> (Int, Int) -> V.Vector Node -> S.Set Int -> Int
     maxpath2' score nclosed rem (prev1, prev2) (cur1, cur2) verts opens
       | rem <= 1 || nclosed <= 0 || theorMax <= bound = score -- nothing more to gain!
-      | otherwise = maxSafe $ evalMoves moves1 moves2
+      | otherwise = maxSafe score $ evalMoves moves1 moves2
       where
-        execMove Open Open = maxpath2' (score + pwr1 * (rem - 1) + pwr2 * (rem - 1)) (nclosed - 2) (rem - 1) (cur1, cur2) (cur1, cur2) (verts V.// [(cur1, (0, adj1)),(cur2, (0, adj2))]) $ M.delete pwr1 $ M.delete pwr2 opens
-        execMove Open (Move (dest, _)) = maxpath2' (score + pwr1 * (rem - 1)) (nclosed - 1) (rem - 1) (cur1, cur2) (cur1, dest) (verts V.// [(cur1, (0, adj1))]) $ M.delete pwr1 opens
-        execMove (Move (dest, _)) Open = maxpath2' (score + pwr2 * (rem - 1)) (nclosed - 1) (rem - 1) (cur1, cur2) (dest, cur2) (verts V.// [(cur2, (0, adj2))]) $ M.delete pwr2 opens
+        execMove Open Open = maxpath2' (score + pwr1 * (rem - 1) + pwr2 * (rem - 1)) (nclosed - 2) (rem - 1) (cur1, cur2) (cur1, cur2) (verts V.// [(cur1, (0, adj1)),(cur2, (0, adj2))]) $ S.delete pwr1 $ S.delete pwr2 opens
+        execMove Open (Move (dest, _)) = maxpath2' (score + pwr1 * (rem - 1)) (nclosed - 1) (rem - 1) (cur1, cur2) (cur1, dest) (verts V.// [(cur1, (0, adj1))]) $ S.delete pwr1 opens
+        execMove (Move (dest, _)) Open = maxpath2' (score + pwr2 * (rem - 1)) (nclosed - 1) (rem - 1) (cur1, cur2) (dest, cur2) (verts V.// [(cur2, (0, adj2))]) $ S.delete pwr2 opens
         execMove (Move (dest1, _)) (Move (dest2, _)) = maxpath2' score nclosed (rem - 1) (cur1, cur2) (dest1, dest2) verts opens
         evalMoves ms1 ms2
           | rem > 10 = ParS.parMap ParS.rdeepseq (uncurry execMove) ls
@@ -104,14 +104,14 @@ maxpath2 bound timeout start (verts, is) = maxpath2' 0 (M.size initOpens) timeou
         folder k w acc = Move (k, w) : acc -- don't backtrack
         mkMoves openCond pwr prev adj
           | pwr > 0 && openCond = Open : moves
-    --      | null moves = [Noop]
+          | null moves = [Move (prev, 1)]
           | otherwise = moves
           where
             moves = if rem < 3 then [] else M.foldrWithKey folder [] $ M.delete prev adj
-        theorMax = score + theorMaxCalc rem (fst <$> M.toDescList opens)
-        theorMaxCalc _ [] = 0
-        theorMaxCalc r [p] = (r - 1) * p
+        theorMax = score + theorMaxCalc rem (S.toDescList opens)
         theorMaxCalc r (p1:p2:t) = (r - 1) * p1 + (r - 1) * p2 + theorMaxCalc (r - 2) t
+        theorMaxCalc r [p] = (r - 1) * p
+        theorMaxCalc _ _ = 0
 
 parseLine :: ParserT (Int, Node)
 parseLine = do
