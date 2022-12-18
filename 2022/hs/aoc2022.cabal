@@ -29,6 +29,7 @@ executable aoc2022
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.16.3.0, vector, regex-tdfa, parsec, containers, mtl
+    build-depends:    base ^>=4.16.3.0, vector, regex-tdfa, parsec, containers, mtl, parallel
     hs-source-dirs:   app
     default-language: Haskell2010
+    ghc-options:      -O2 -threaded
