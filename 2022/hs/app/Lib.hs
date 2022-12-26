@@ -1,8 +1,8 @@
 module Lib where
 
-import Data.Either (rights, fromRight)
+import Data.Either (fromRight, rights)
+import Data.Maybe (catMaybes, mapMaybe)
 import qualified Text.Parsec as P
-import Data.Maybe (mapMaybe, catMaybes)
 
 type ParserT a = P.Parsec String () a
 
@@ -19,6 +19,7 @@ split d = splitWhen (== d)
 -- 2D helpers
 
 type Point2D = (Int, Int)
+
 data Direction2D = DirUp | DirDown | DirLeft | DirRight deriving (Eq, Show)
 
 point2DFromInt :: Int -> Int -> Point2D
@@ -56,25 +57,25 @@ map2D f (x1, y1) (x2, y2) = (f x1 x2, f y1 y2)
 
 -- (upper left, bottom right)
 boundaries2D :: (Foldable f, Functor f) => f Point2D -> (Point2D, Point2D)
-boundaries2D ps = ((minimum $ fst <$> ps, minimum $ snd <$> ps),(maximum $ fst <$> ps, maximum $ snd <$> ps))
+boundaries2D ps = ((minimum $ fst <$> ps, minimum $ snd <$> ps), (maximum $ fst <$> ps, maximum $ snd <$> ps))
 
 -- return a list of points corresponding to a line between two points
 line2D :: Point2D -> Point2D -> [Point2D]
 line2D (x1, y1) (x2, y2)
-  | x1 == x2 = [(x1, y) | y <- [min y1 y2..max y1 y2]]
-  | y1 == y2 = [(x, y1) | x <- [min x1 x2..max x1 x2]]
+  | x1 == x2 = [(x1, y) | y <- [min y1 y2 .. max y1 y2]]
+  | y1 == y2 = [(x, y1) | x <- [min x1 x2 .. max x1 x2]]
   | otherwise = [] -- no support for slanted lines
 
 distance2DManhattan :: Point2D -> Point2D -> Int
 distance2DManhattan (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
 
 print2D :: [Point2D] -> IO ()
-print2D v = mapM_ (printL [minx..maxx]) [miny..maxy]
+print2D v = mapM_ (printL [minx .. maxx]) [miny .. maxy]
   where
-    ((minx, miny),(maxx, maxy)) = boundaries2D v
+    ((minx, miny), (maxx, maxy)) = boundaries2D v
     printL :: [Int] -> Int -> IO ()
     printL [] y = putChar '\n'
-    printL (x:xs) y = putChar (printC (x, y)) >> printL xs y
+    printL (x : xs) y = putChar (printC (x, y)) >> printL xs y
     printC :: Point2D -> Char
     printC x
       | x `elem` v = '█'
@@ -82,10 +83,27 @@ print2D v = mapM_ (printL [minx..maxx]) [miny..maxy]
 
 -- print boolean vector (with width)
 print2DL :: Int -> [Bool] -> IO ()
-print2DL w xs = print2D $ catMaybes $ zipWith fn [0..] xs
+print2DL w xs = print2D $ catMaybes $ zipWith fn [0 ..] xs
   where
     fn _ False = Nothing
     fn i True = Just $ point2DFromInt w i
+
+-- N-Dimensional points
+
+-- x y z
+type Point = [Int]
+
+isAdjacentND :: Point -> Point -> Bool
+isAdjacentND a b = (== 1) . sum $ zipWith (\a b -> abs (a - b)) a b
+
+isBoundedND :: [(Int, Int)] -> Point -> Bool
+isBoundedND bounds p = and $ zipWith (\(lo, hi) x -> x >= lo && x <= hi) bounds p
+
+isBoundedExclND :: [(Int, Int)] -> Point -> Bool
+isBoundedExclND bounds p = and $ zipWith (\(lo, hi) x -> x > lo && x < hi) bounds p
+
+neighborsND :: Point -> [Point]
+neighborsND p = [x | i <- [0 .. length p - 1], di <- [1, -1], let x = take i p ++ [(p !! i) + di] ++ drop (i + 1) p]
 
 -- parsing
 
