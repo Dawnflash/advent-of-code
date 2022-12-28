@@ -111,4 +111,4 @@ parseLines :: ParserT a -> [String] -> [a]
 parseLines p = rights . map (P.parse p "")
 
 parseInt :: ParserT Int
-parseInt = read <$> (P.optional (P.char '-') >> P.many1 P.digit)
+parseInt = read <$> (P.many1 P.digit P.<|> (:) <$> P.char '-' <*> P.many1 P.digit)
