@@ -20,7 +20,7 @@ split d = splitWhen (== d)
 
 type Point2D = (Int, Int)
 
-data Direction2D = DirUp | DirDown | DirLeft | DirRight deriving (Eq, Show)
+data Direction2D = DirUp | DirRight | DirDown | DirLeft deriving (Eq, Show, Enum)
 
 point2DFromInt :: Int -> Int -> Point2D
 point2DFromInt w p = let (y, x) = divMod p w in (x, y)
@@ -87,6 +87,15 @@ print2DL w xs = print2D $ catMaybes $ zipWith fn [0 ..] xs
   where
     fn _ False = Nothing
     fn i True = Just $ point2DFromInt w i
+
+turnF :: (Int -> Int -> Int) -> Direction2D -> Direction2D -> Direction2D
+turnF f a b = toEnum $ f (fromEnum a) (fromEnum b) `mod` 4
+
+turn :: Direction2D -> Direction2D -> Direction2D
+turn = turnF (+)
+
+turnInv :: Direction2D -> Direction2D -> Direction2D
+turnInv = turnF (-)
 
 -- N-Dimensional points
 
