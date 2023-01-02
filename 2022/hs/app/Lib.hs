@@ -20,7 +20,12 @@ split d = splitWhen (== d)
 
 type Point2D = (Int, Int)
 
-data Direction2D = DirUp | DirRight | DirDown | DirLeft deriving (Eq, Show, Enum)
+data Direction2D = DirUp | DirRight | DirDown | DirLeft deriving (Eq, Enum)
+instance Show Direction2D where
+  show DirUp = "↑"
+  show DirDown = "↓"
+  show DirLeft = "←"
+  show DirRight = "→"
 
 point2DFromInt :: Int -> Int -> Point2D
 point2DFromInt w p = let (y, x) = divMod p w in (x, y)
@@ -46,8 +51,13 @@ step2D d (x, y) = step2D' d
 move2D :: [Direction2D] -> Point2D -> Point2D
 move2D ds p = foldl (flip step2D) p ds
 
+-- n s w e
 neighbors2D :: Point2D -> [Point2D]
 neighbors2D p = map (`step2D` p) [DirUp, DirDown, DirLeft, DirRight]
+
+-- nw n ne e se s sw w
+adjacent2D :: Point2D -> [Point2D]
+adjacent2D p = map2D (+) p <$> [(-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0)]
 
 isNeighbor2D :: Point2D -> Point2D -> Bool
 isNeighbor2D (x1, y1) (x2, y2) = abs (x1 - x2) < 2 && abs (y1 - y2) < 2
