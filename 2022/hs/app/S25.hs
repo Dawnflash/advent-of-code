@@ -1,6 +1,5 @@
 module S25 where
 
-import qualified Data.Vector.Unboxed as V
 import Lib (ParserT, parseLines)
 import qualified Text.Parsec as P
 
@@ -11,26 +10,27 @@ main input = do
   print $ toSNAFU $ sum $ map fromSNAFU pInput -- part 1
 
 toSNAFU :: Int -> String
-toSNAFU 0 = "0"
-toSNAFU i = vprint $ toSNAFU' i initP (V.fromList $ replicate (initP + 2) 0)
+toSNAFU i = map conv $ reverse $ carry 0 $ reverse $ toPental i initP
   where
+    conv :: Int -> Char
+    conv (-2) = '='
+    conv (-1) = '-'
+    conv d = head $ show d
     initP = fromIntegral $ intLog 5 $ fromIntegral i
-    vprint = V.foldr (\c acc -> conv c : acc) "" . V.dropWhile (== 0) . V.reverse
-      where
-        conv (-2) = '='
-        conv (-1) = '-'
-        conv d = head $ show d
-    toSNAFU' :: Int -> Int -> V.Vector Int -> V.Vector Int
-    toSNAFU' i p v
-      | p < 0 = v
-      | otherwise = toSNAFU' m (pred p) $ carry p d $ v V.// [(p, d)]
+    toPental :: Int -> Int -> [Int]
+    toPental i p
+      | p < 0 = []
+      | otherwise = d : toPental m (pred p)
       where
         (d, m) = i `divMod` (5 ^ p)
-        carry p d v
-          | d < 3 = v
-          | otherwise = carry (succ p) sParent $ v V.// [(p, d - 5), (succ p, sParent)]
-          where
-            sParent = succ $ v V.! succ p
+    carry :: Int -> [Int] -> [Int]
+    carry 0 [] = []
+    carry 1 [] = [1]
+    carry i (h : t)
+      | hi < 3 = hi : carry 0 t
+      | otherwise = (hi - 5) : carry 1 t
+      where
+        hi = h + i
 
 fromSNAFU :: String -> Int
 fromSNAFU s = sum $ zipWith (\i c -> 5 ^ i * conv c) [0 ..] (reverse s)
