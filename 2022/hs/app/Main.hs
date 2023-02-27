@@ -29,9 +29,12 @@ import System.Environment (getArgs)
 
 main :: IO ()
 main = do
-  args <- getArgs
-  let stage = read $ head args :: Int
-  input <- readFile $ "inputs/" ++ show stage
+  argStage : args <- getArgs
+  let stage = read argStage :: Int
+  let prefix = case args of
+        (x : _) -> x
+        _ -> ""
+  input <- readFile $ "../inputs/" ++ prefix ++ show stage
   case stage of
     1 -> S1.main input
     2 -> S2.main input

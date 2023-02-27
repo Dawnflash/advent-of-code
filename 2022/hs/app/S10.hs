@@ -15,6 +15,7 @@ main input = do
   let cycles = V.fromList $ reverse $ tail $ foldl run [1] pInput
 
   print $ sum $ signal cycles <$> p1Cycles              -- part 1
+  print $ length $ cycles
   print2D $ foldl draw [] $ zip [0..] $ V.toList cycles -- part 2
 
 parseLine :: ParserT Instr
