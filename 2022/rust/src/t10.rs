@@ -47,7 +47,6 @@ pub fn main(input: String) {
         Instr::from_str(line).unwrap().eval(&mut sim);
     }
     sim.truncate(sim.len() - 1); // strip the last one
-    dbg!(sim.len());
     println!(
         "{}",
         [20, 60, 100, 140, 180, 220]
@@ -55,7 +54,6 @@ pub fn main(input: String) {
             .map(|&i| i * sim[i as usize - 1])
             .sum::<i32>()
     );
-    dbg!(sim.len());
     for (i, reg) in sim.iter().enumerate() {
         //println!("{} {} {}", i, reg, num::abs(reg - (i % 40) as i32));
         if num::abs(reg - (i % 40) as i32) < 2 {
