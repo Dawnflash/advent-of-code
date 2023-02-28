@@ -1,7 +1,6 @@
 use std::rc::Rc;
 use std::str::FromStr;
 
-use aoc2022::parse_int;
 use itertools::Itertools;
 use num::integer::lcm;
 
@@ -46,25 +45,18 @@ impl FromStr for Monkey {
         let lines = s.lines().skip(1).map(|s| s.trim()).collect_vec();
         let split =
             |n: usize, s: &str| lines[n].split(s).collect_tuple::<(&str, &str)>().unwrap().1;
-        let sitems = split(0, ": ");
-        let sop = split(1, "new = old ");
-        let t: u64 = split(2, "divisible by ").parse().unwrap();
-        let tt: usize = split(3, "monkey ").parse().unwrap();
-        let tf: usize = split(4, "monkey ").parse().unwrap();
-        let test = MTest {
-            div: t,
-            monkey_t: tt,
-            monkey_f: tf,
-        };
-
-        let items = nom::multi::separated_list1(nom::bytes::complete::tag(", "), parse_int)(sitems)
-            .unwrap()
-            .1;
 
         Ok(Monkey {
-            items: items,
-            op: parse_op(sop),
-            test: test,
+            items: split(0, ": ")
+                .split(", ")
+                .map(|s| s.parse().unwrap())
+                .collect(),
+            op: parse_op(split(1, "new = old ")),
+            test: MTest {
+                div: split(2, "divisible by ").parse().unwrap(),
+                monkey_t: split(3, "monkey ").parse().unwrap(),
+                monkey_f: split(4, "monkey ").parse().unwrap(),
+            },
             inspections: 0,
         })
     }
