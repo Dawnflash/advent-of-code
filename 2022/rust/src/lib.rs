@@ -79,8 +79,16 @@ impl Point2D {
         Self { x: x, y: y }
     }
 
-    pub fn origin() -> Self {
-        Self::new(0, 0)
+    pub const fn origin() -> Self {
+        Self { x: 0, y: 0 }
+    }
+
+    pub fn from_int(i: i32, w: usize) -> Self {
+        Self::new(i % w as i32, i / w as i32)
+    }
+
+    pub fn to_int(self, w: usize) -> i32 {
+        self.x + self.y * w as i32
     }
 
     pub fn step_2d_unchecked(self, dir: Direction2D) -> Self {
@@ -96,20 +104,39 @@ impl Point2D {
         }
     }
 
+    pub fn is_bounded(self, begin: Self, end: Self) -> bool {
+        self.x >= begin.x && self.x < end.x && self.y >= begin.y && self.y < end.y
+    }
+
     pub fn step_2d(self, begin: Self, end: Self, dir: Direction2D) -> Option<Self> {
-        //println!("{:?} {:?}, {:?}", dir, (w, h), (x, y));
-        let unchecked = Some(self.step_2d_unchecked(dir));
-        match dir {
-            Direction2D::U if self.y > begin.y => unchecked,
-            Direction2D::UR if self.x < end.x - 1 && self.y > begin.y => unchecked,
-            Direction2D::R if self.x < end.x - 1 => unchecked,
-            Direction2D::DR if self.x < end.x - 1 && self.y < end.y - 1 => unchecked,
-            Direction2D::D if self.y < end.y - 1 => unchecked,
-            Direction2D::DL if self.x > begin.x && self.y < end.y - 1 => unchecked,
-            Direction2D::L if self.x > begin.x => unchecked,
-            Direction2D::UL if self.x > begin.x && self.y > begin.y => unchecked,
-            _ => None,
+        let unchecked = self.step_2d_unchecked(dir);
+        if unchecked.is_bounded(begin, end) {
+            Some(unchecked)
+        } else {
+            None
         }
+    }
+
+    pub fn adjacent_cross(self) -> [Self; 4] {
+        [
+            self.step_2d_unchecked(Direction2D::U),
+            self.step_2d_unchecked(Direction2D::R),
+            self.step_2d_unchecked(Direction2D::D),
+            self.step_2d_unchecked(Direction2D::L),
+        ]
+    }
+
+    pub fn adjacent(self) -> [Self; 8] {
+        [
+            self.step_2d_unchecked(Direction2D::U),
+            self.step_2d_unchecked(Direction2D::UR),
+            self.step_2d_unchecked(Direction2D::R),
+            self.step_2d_unchecked(Direction2D::DR),
+            self.step_2d_unchecked(Direction2D::D),
+            self.step_2d_unchecked(Direction2D::DL),
+            self.step_2d_unchecked(Direction2D::L),
+            self.step_2d_unchecked(Direction2D::UL),
+        ]
     }
 
     pub fn is_neighbor(self, other: Self) -> bool {
