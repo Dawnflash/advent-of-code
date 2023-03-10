@@ -24,7 +24,7 @@ main input = do
   let (ncave, s) = dropSand True cave bounds sandEntry 0
   let (ncave2, s2) = dropSand False cave bounds sandEntry 0
 
-  print2D $ S.toList ncave
+  -- print2D $ S.toList ncave
 
   print s -- part 1
   print s2 -- part 2
