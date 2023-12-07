@@ -1,75 +1,92 @@
-use aoc2023::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-struct Dir {
-    children: HashMap<String, Dir>,
-    size: u64,
-}
+use itertools::Itertools;
 
-impl Dir {
-    fn new() -> Self {
-        Self {
-            children: HashMap::new(),
-            size: 0,
-        }
-    }
-}
+const CARDS: [char; 13] = [
+    '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A',
+];
+const CARDS_2: [char; 13] = [
+    'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A',
+];
 
 pub fn main(input: String) {
-    let mut root = Dir::new();
-    eval(input.lines().skip(1).by_ref(), &mut root);
-    let mut sizes = vec![];
-    post_eval(&mut root, &mut sizes);
-    println!("{}", sizes.iter().filter(|&&s| s <= 100000).sum::<u64>()); // part 1
-    let needed = 30000000 - (70000000 - root.size);
-    println!("{}", sizes.iter().filter(|&&s| s >= needed).min().unwrap()); // part 2
+    println!("Part 1: {}", part(input.as_str(), 1));
+    println!("Part 2: {}", part(input.as_str(), 2));
 }
 
-// correct directory sizes and return them in a vector
-fn post_eval(dir: &mut Dir, sizes: &mut Vec<u64>) {
-    for (_, child) in dir.children.iter_mut() {
-        post_eval(child, sizes);
-        dir.size += child.size;
-    }
-    sizes.push(dir.size);
+fn part(input: &str, part: usize) -> u64 {
+    let cards = if part == 1 { &CARDS } else { &CARDS_2 };
+    let card_strengths: HashMap<char, u64> = cards
+        .iter()
+        .enumerate()
+        .map(|(n, c)| (*c, n as u64))
+        .collect();
+    let hands = input
+        .lines()
+        .map(|line| {
+            let (cards, bid) = line.split_once(" ").unwrap();
+            let bid = bid.parse::<u64>().unwrap();
+            let strength = hand_strength(&cards, &card_strengths, part == 2);
+            (strength, bid)
+        })
+        .collect_vec();
+    let score_map: HashMap<u64, u64> = hands
+        .iter()
+        .map(|(s, _)| *s)
+        .collect::<HashSet<u64>>()
+        .iter()
+        .sorted()
+        .enumerate()
+        .map(|(n, s)| (*s, n as u64 + 1))
+        .collect();
+    hands
+        .iter()
+        .map(|(s, b)| score_map.get(s).unwrap() * b)
+        .sum()
 }
 
-// populate directory tree
-fn eval<'a, I>(lines: &mut I, dir: &mut Dir)
-where
-    I: Iterator<Item = &'a str>,
-{
-    let line = lines.next();
-    if line.is_none() {
-        return;
-    }
-    let line = line.unwrap();
-    if line.starts_with("$ ") {
-        // commands
-        let cmd = &line[2..];
-        if cmd.starts_with("cd") {
-            if cmd == "cd .." {
-                return;
+fn hand_strength(hand: &str, card_strengths: &HashMap<char, u64>, jokers: bool) -> u64 {
+    let type_strength: u64 = if jokers {
+        CARDS
+            .iter()
+            .map(|c| score_hand_types(&hand.replace("J", &c.to_string())))
+            .max()
+            .unwrap()
+    } else {
+        score_hand_types(hand)
+    };
+    13u64.pow(5) * type_strength
+        + hand
+            .chars()
+            .rev()
+            .enumerate()
+            .map(|(n, c)| 13u64.pow(n as u32) * card_strengths.get(&c).unwrap())
+            .sum::<u64>()
+}
+
+fn score_hand_types(hand: &str) -> u64 {
+    let counts: HashMap<char, u64> = hand.chars().fold(HashMap::new(), |mut m, c| {
+        *m.entry(c).or_insert(0) += 1;
+        m
+    });
+    let inv_counts: HashMap<u64, char> = counts.iter().map(|(&a, &b)| (b, a)).collect();
+    match counts.len() {
+        5 => 1,
+        4 => 2,
+        3 => {
+            if inv_counts.contains_key(&3) {
+                4
             } else {
-                let dirname = &cmd[3..];
-                eval(lines, dir.children.get_mut(dirname).unwrap());
+                3
             }
         }
-    } else if line.starts_with("dir") {
-        // files
-        let dirname = &line[4..];
-        dir.children.insert(dirname.to_string(), Dir::new());
-    } else {
-        let (s, _) = parse_file(line).unwrap().1;
-        dir.size += s;
+        2 => {
+            if inv_counts.contains_key(&4) {
+                6
+            } else {
+                5
+            }
+        }
+        _ => 7,
     }
-    eval(lines, dir)
-}
-
-fn parse_file(i: &str) -> nom::IResult<&str, (u64, &str)> {
-    nom::sequence::separated_pair(
-        parse_int,
-        nom::character::complete::char(' '),
-        nom::combinator::rest,
-    )(i)
 }
