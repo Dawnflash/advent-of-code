@@ -58,6 +58,55 @@ impl FromStr for Direction2D {
     }
 }
 
+impl Direction2D {
+    pub fn invert(self) -> Self {
+        self.rotate(2)
+    }
+
+    // + CW, - CCW, 90 deg = 1
+    pub fn rotate(self, n: i32) -> Self {
+        let mut dir = self;
+        for _ in 0..n.rem_euclid(4) {
+            dir = match dir {
+                Self::U => Self::R,
+                Self::UR => Self::DR,
+                Self::R => Self::D,
+                Self::DR => Self::DL,
+                Self::D => Self::L,
+                Self::DL => Self::UL,
+                Self::L => Self::U,
+                Self::UL => Self::UR,
+            }
+        }
+        dir
+    }
+
+    pub fn angle_to(self, other: Self) -> i32 {
+        // TODO: U/UL angles (1/2)
+        match (self, other) {
+            (Self::U, Self::R) => 1,
+            (Self::R, Self::D) => 1,
+            (Self::D, Self::L) => 1,
+            (Self::L, Self::U) => 1,
+            (Self::UR, Self::DR) => 1,
+            (Self::DR, Self::DL) => 1,
+            (Self::DL, Self::UL) => 1,
+            (Self::UL, Self::UR) => 1,
+            (Self::U, Self::D) => 2,
+            (Self::R, Self::L) => 2,
+            (Self::UR, Self::DL) => 2,
+            (Self::DR, Self::UL) => 2,
+            (a, b) => {
+                if a == b {
+                    0
+                } else {
+                    4 - b.angle_to(a)
+                }
+            }
+        }
+    }
+}
+
 impl Sub for Point2D {
     type Output = Self;
 
