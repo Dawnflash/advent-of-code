@@ -1,110 +1,59 @@
-use std::rc::Rc;
-use std::str::FromStr;
-
+use aoc2023::Point2D;
 use itertools::Itertools;
-use num::integer::lcm;
-
-#[derive(Clone)]
-struct MTest {
-    div: u64,
-    monkey_t: usize,
-    monkey_f: usize,
-}
-#[derive(Clone)]
-struct Monkey {
-    items: Vec<u64>,
-    op: Rc<dyn Fn(u64) -> u64>,
-    test: MTest,
-    inspections: u64,
-}
-
-impl std::fmt::Debug for Monkey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Monkey [{}] {:?}", self.inspections, self.items)
-    }
-}
-
-fn parse_op(s: &str) -> Rc<dyn Fn(u64) -> u64> {
-    let (sop, sr) = s.split(" ").collect_tuple().unwrap();
-    let op = match sop {
-        "+" => |a, b| a + b,
-        "*" => |a, b| a * b,
-        _ => unreachable!("Unknown op!"),
-    };
-
-    match sr.parse::<u64>() {
-        Err(_) => Rc::new(move |x| op(x, x)),
-        Ok(i) => Rc::new(move |x| op(x, i)),
-    }
-}
-
-impl FromStr for Monkey {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let lines = s.lines().skip(1).map(|s| s.trim()).collect_vec();
-        let split =
-            |n: usize, s: &str| lines[n].split(s).collect_tuple::<(&str, &str)>().unwrap().1;
-
-        Ok(Monkey {
-            items: split(0, ": ")
-                .split(", ")
-                .map(|s| s.parse().unwrap())
-                .collect(),
-            op: parse_op(split(1, "new = old ")),
-            test: MTest {
-                div: split(2, "divisible by ").parse().unwrap(),
-                monkey_t: split(3, "monkey ").parse().unwrap(),
-                monkey_f: split(4, "monkey ").parse().unwrap(),
-            },
-            inspections: 0,
-        })
-    }
-}
-
-fn rounds(n: usize, monkeys: &mut Vec<Monkey>, div: bool) {
-    let divisor = if div { 3 } else { 1 };
-    let modulus = monkeys
-        .iter()
-        .map(|m| m.test.div)
-        .reduce(|acc, e| lcm(acc, e))
-        .unwrap();
-    let mut item_bufs = vec![vec![]; monkeys.len()];
-    for _ in 0..n {
-        for (i, monkey) in monkeys.iter_mut().enumerate() {
-            monkey.items.append(&mut item_bufs[i]);
-            monkey.inspections += monkey.items.len() as u64;
-            for item in monkey.items.drain(..) {
-                let worry = (monkey.op)(item) / divisor % modulus;
-                let next = if worry % monkey.test.div == 0 {
-                    monkey.test.monkey_t
-                } else {
-                    monkey.test.monkey_f
-                };
-                item_bufs[next].push(worry);
-            }
-        }
-    }
-}
-
-fn monkey_business(monkeys: &Vec<Monkey>) -> u64 {
-    monkeys
-        .iter()
-        .map(|m| m.inspections)
-        .sorted()
-        .rev()
-        .take(2)
-        .product()
-}
 
 pub fn main(input: String) {
-    let mut monkeys = input
-        .split("\n\n")
-        .map(|s| Monkey::from_str(s).unwrap())
-        .collect_vec();
-    let mut monkeys2 = monkeys.clone();
-    rounds(20, &mut monkeys, true);
-    println!("{}", monkey_business(&monkeys)); // part 1
-    rounds(10000, &mut monkeys2, false);
-    println!("{}", monkey_business(&monkeys2)); // part 2
+    let size = (input.lines().next().unwrap().len(), input.lines().count());
+    let galaxy: Vec<Point2D> = input
+        .lines()
+        .enumerate()
+        .map(|(y, line)| {
+            line.chars()
+                .enumerate()
+                .map(move |(x, c)| match c {
+                    '#' => Some(Point2D::new(x as i32, y as i32)),
+                    _ => None,
+                })
+                .flatten()
+        })
+        .flatten()
+        .collect();
+
+    let mut galaxy_1 = galaxy.clone();
+    expand(&mut galaxy_1, size, 1);
+    let p1 = galaxy_1
+        .iter()
+        .combinations(2)
+        .map(|pair| pair[0].manhattan_distance(*pair[1]))
+        .sum::<i32>();
+    println!("Part 1: {}", p1);
+    let mut galaxy_2 = galaxy.clone();
+    expand(&mut galaxy_2, size, 999999);
+    let p2: i64 = galaxy_2
+        .iter()
+        .combinations(2)
+        .map(|pair| pair[0].manhattan_distance(*pair[1]) as i64)
+        .sum::<i64>();
+    println!("Part 2: {}", p2);
+}
+
+fn expand(galaxy: &mut Vec<Point2D>, size: (usize, usize), magnitude: i32) {
+    let galaxy_orig = galaxy.clone();
+    (0..size.1 as i32)
+        .filter(|y| galaxy_orig.iter().all(|p| p.y != *y))
+        .for_each(|y| {
+            galaxy_orig
+                .iter()
+                .enumerate()
+                .filter(|(_, p)| p.y > y)
+                .for_each(|(n, _)| galaxy[n].y += magnitude)
+        });
+    (0..size.0 as i32)
+        .filter(|x| galaxy_orig.iter().all(|p| p.x != *x))
+        .for_each(|x| {
+            galaxy_orig
+                .iter()
+                .enumerate()
+                .filter(|(_, p)| p.x > x)
+                .for_each(|(n, _)| galaxy[n].x += magnitude)
+        });
 }

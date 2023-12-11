@@ -191,4 +191,8 @@ impl Point2D {
     pub fn is_neighbor(self, other: Self) -> bool {
         std::cmp::max(num::abs(self.x - other.x), num::abs(self.y - other.y)) < 2
     }
+
+    pub fn manhattan_distance(self, other: Self) -> i32 {
+        num::abs(self.x - other.x) + num::abs(self.y - other.y)
+    }
 }

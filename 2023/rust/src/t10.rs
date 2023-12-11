@@ -1,5 +1,3 @@
-use std::iter;
-
 use aoc2023::{Direction2D as Dir, Point2D};
 use itertools::Itertools;
 
@@ -17,7 +15,6 @@ enum Pipe {
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Tile {
     Loop(Pipe),
-    Inside,
     Outside,
     Unknown(Pipe),
 }
@@ -26,7 +23,6 @@ impl Tile {
     fn unwrap(self) -> Pipe {
         match self {
             Self::Loop(p) => p,
-            Self::Inside => Pipe::GROUND,
             Self::Outside => Pipe::GROUND,
             Self::Unknown(p) => p,
         }
@@ -39,7 +35,6 @@ impl Tile {
             Self::Loop(Pipe::UR) => '╚',
             Self::Loop(Pipe::DL) => '╗',
             Self::Loop(Pipe::DR) => '╔',
-            Self::Inside => 'I',
             Self::Outside => 'O',
             Self::Unknown(_) => '?',
             _ => '.',
