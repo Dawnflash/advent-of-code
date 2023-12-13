@@ -1,79 +1,61 @@
-use aoc2023::parse_int;
-use itertools::Itertools;
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-enum Packet {
-    PInt(i32),
-    PList(Vec<Packet>),
-}
-
-fn parse_packet(s: &str) -> nom::IResult<&str, Packet> {
-    nom::branch::alt((
-        nom::combinator::map(
-            nom::sequence::delimited(
-                nom::character::complete::char('['),
-                nom::multi::separated_list0(nom::character::complete::char(','), parse_packet),
-                nom::character::complete::char(']'),
-            ),
-            |v| Packet::PList(v),
-        ),
-        nom::combinator::map(parse_int, |i| Packet::PInt(i)),
-    ))(s)
-}
-
-impl PartialOrd for Packet {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Packet {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self, other) {
-            (Packet::PInt(s), Packet::PInt(o)) => s.cmp(o),
-            (Packet::PList(s), Packet::PList(o)) => s.cmp(o),
-            (s, Packet::PInt(o)) => {
-                let op = Packet::PList(vec![Packet::PInt(*o)]);
-                s.cmp(&op)
-            }
-            (Packet::PInt(s), o) => {
-                let sp = Packet::PList(vec![Packet::PInt(*s)]);
-                sp.cmp(o)
-            }
-        }
-    }
-}
-
 pub fn main(input: String) {
-    let p1: usize = input
+    let (p1, p2): (usize, usize) = input
         .split("\n\n")
-        .enumerate()
-        .map(|(i, chunk)| {
-            let (l, r) = chunk
-                .lines()
-                .map(|s| parse_packet(s).expect("parse error").1)
-                .collect_tuple::<(Packet, Packet)>()
-                .unwrap();
-            if l < r {
-                i + 1
-            } else {
+        .map(|pattern| {
+            let mut rows: Vec<String> = pattern.lines().map(|s| s.to_string()).collect();
+            let orig = reflect(&rows, None, false);
+            for y in 0..rows.len() {
+                for x in 0..rows[0].len() {
+                    let (o, c) = if rows[y].as_bytes()[x] == b'#' {
+                        ("#", ".")
+                    } else {
+                        (".", "#")
+                    };
+                    rows[y].replace_range(x..x + 1, c);
+                    let alt = reflect(&rows, Some(orig), false);
+                    rows[y].replace_range(x..x + 1, o);
+                    if alt != orig && alt != 0 {
+                        return (orig, alt);
+                    }
+                }
+            }
+            println!("orig: {}", orig);
+            for row in rows.iter() {
+                println!("{}", row);
+            }
+            panic!("No alt found")
+        })
+        .fold((0, 0), |(acc1, acc2), (n1, n2)| (acc1 + n1, acc2 + n2));
+    println!("Part 1: {}", p1);
+    println!("Part 2: {}", p2);
+}
+
+fn reflect(pattern: &Vec<String>, orig: Option<usize>, transposed: bool) -> usize {
+    let mult = if transposed { 1 } else { 100 };
+    (1..pattern.len())
+        .find(|&n| {
+            if Some(n * mult) == orig {
+                return false;
+            }
+            let rows = std::cmp::min(n, pattern.len() - n);
+            pattern[n - rows..n]
+                .iter()
+                .eq(pattern[n..n + rows].iter().rev())
+        })
+        .map(|v| v * mult)
+        .unwrap_or_else(|| {
+            if transposed {
                 0
+            } else {
+                let cols: Vec<String> = (0..pattern[0].len())
+                    .map(|col| {
+                        pattern
+                            .iter()
+                            .map(|row| row.chars().nth(col).unwrap())
+                            .collect()
+                    })
+                    .collect();
+                reflect(&cols, orig, true)
             }
         })
-        .sum();
-    println!("{p1}");
-
-    let p2 = Packet::PList(vec![Packet::PList(vec![Packet::PInt(2)])]);
-    let p6 = Packet::PList(vec![Packet::PList(vec![Packet::PInt(6)])]);
-    let mut p2_packets = vec![p2.clone(), p6.clone()];
-    p2_packets.extend(
-        input
-            .lines()
-            .filter(|s| s.len() > 0)
-            .map(|s| parse_packet(s).expect("parse error").1),
-    );
-    p2_packets.sort();
-    let p2_ix = p2_packets.iter().position(|e| e == &p2).unwrap() + 1;
-    let p6_ix = p2_packets.iter().position(|e| e == &p6).unwrap() + 1;
-    println!("{}", p2_ix * p6_ix);
 }
