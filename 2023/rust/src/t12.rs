@@ -4,12 +4,15 @@ type Memo = HashMap<(String, Vec<usize>), usize>;
 
 pub fn main(input: String) {
     let mut memo: Memo = HashMap::new();
+    let mut hits: f64 = 0.0;
     let p1: usize = input
         .lines()
         .map(|line| {
             let (layout, runs) = line.split_once(" ").unwrap();
             let runs: Vec<usize> = runs.split(",").map(|c| c.parse().unwrap()).collect();
-            analyze(&layout, &runs, &mut memo)
+            let (res, hit) = analyze(&layout, &runs, &mut memo);
+            hits += if hit { 1.0 } else { 0.0 };
+            res
         })
         .sum();
     println!("Part 1: {}", p1);
@@ -23,14 +26,21 @@ pub fn main(input: String) {
                 acc
             });
             let layout = [_layout, _layout, _layout, _layout, _layout].join("?");
-            analyze(&layout, &runs, &mut memo)
+            let (res, hit) = analyze(&layout, &runs, &mut memo);
+            hits += if hit { 1.0 } else { 0.0 };
+            res
         })
         .sum();
     println!("Part 2: {}", p2);
-    println!("Cache size: {}kB", memo.len() * usize::BITS as usize / 8192);
+    println!(
+        "Cache hits: {}, {}%\nCache lines: {}",
+        hits,
+        hits / (input.lines().count() as f64 * 2.0) * 100.0,
+        memo.len()
+    );
 }
 
-fn analyze(layout: &str, runs: &Vec<usize>, memo: &mut Memo) -> usize {
+fn analyze(layout: &str, runs: &Vec<usize>, memo: &mut Memo) -> (usize, bool) {
     let run_sum = runs.iter().sum::<usize>();
     let slots = layout.chars().filter(|c| *c == '?').count();
     let pending = run_sum - layout.chars().filter(|c| *c == '#').count();
@@ -42,7 +52,7 @@ fn analyze(layout: &str, runs: &Vec<usize>, memo: &mut Memo) -> usize {
         pending,
         memo,
     );
-    memo.insert((layout.to_string(), runs.clone()), res);
+    memo.insert((layout.to_string(), runs.clone()), res.0);
     res
 }
 
@@ -54,46 +64,54 @@ fn analyze_step(
     slots: usize,
     pending: usize,
     memo: &mut Memo,
-) -> usize {
+) -> (usize, bool) {
     if !in_run {
         if let Some(&res) = memo.get(&(layout.to_string(), runs.clone())) {
-            return res;
+            return (res, true);
         }
     }
     let cur = layout.chars().next();
     // deterministic checks
     if pending == 0 && cur.is_some() && !in_run {
         let full = layout.replace("?", ".");
-        return if analyze_det(&full, &runs) { 1 } else { 0 };
+        return if analyze_det(&full, &runs) {
+            (1, false)
+        } else {
+            (0, false)
+        };
     }
     if slots == pending && cur.is_some() && !in_run {
         let full = layout.replace("?", "#");
-        return if analyze_det(&full, &runs) { 1 } else { 0 };
+        return if analyze_det(&full, &runs) {
+            (1, false)
+        } else {
+            (0, false)
+        };
     }
     let runs_copy = runs.clone();
     let res = match (cur, runs.get(0)) {
-        (None, None) => 1,
+        (None, None) => (1, false),
         (None, Some(_)) => {
             // # ending
             if runs.iter().all(|&r| r == 0) {
-                1
+                (1, false)
             } else {
-                0
+                (0, false)
             }
         }
         (Some(_), None) => {
             // . tail
             if layout.chars().all(|c| c != '#') {
-                1
+                (1, false)
             } else {
-                0
+                (0, false)
             }
         }
         (Some(c), Some(&r)) => match c {
             '.' => {
                 if in_run {
                     if r != 0 {
-                        0
+                        (0, false)
                     } else {
                         analyze_step(
                             layout.chars().skip(1).collect(),
@@ -117,7 +135,7 @@ fn analyze_step(
             }
             '#' => {
                 if r == 0 {
-                    0
+                    (0, false)
                 } else {
                     let mut runs = runs.clone();
                     runs[0] -= 1;
@@ -151,28 +169,30 @@ fn analyze_step(
                         memo,
                     )
                 } else {
-                    analyze_step(
+                    let a = analyze_step(
                         String::from('.') + &layout[1..],
                         runs.clone(),
                         in_run,
                         slots - 1,
                         pending,
                         memo,
-                    ) + analyze_step(
+                    );
+                    let b = analyze_step(
                         String::from('#') + &layout[1..],
                         runs,
                         in_run,
                         slots - 1,
                         pending - 1,
                         memo,
-                    )
+                    );
+                    (a.0 + b.0, a.1 || b.1)
                 }
             }
             _ => panic!("unexpected char"),
         },
     };
     if !in_run {
-        memo.insert((layout, runs_copy), res);
+        memo.insert((layout, runs_copy), res.0);
     }
     res
 }
