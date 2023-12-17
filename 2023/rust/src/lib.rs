@@ -1,9 +1,14 @@
+#[macro_use]
+extern crate num_derive;
+
 use nom::{
     character::complete::{char, digit1},
     combinator::{map_res, opt, recognize},
     sequence::preceded,
 };
+use num_traits::FromPrimitive;
 use std::{
+    fmt::Display,
     ops::{Add, Sub},
     str::FromStr,
 };
@@ -22,14 +27,13 @@ pub struct Point2D {
     pub y: i32,
 }
 
-#[macro_export]
-macro_rules! index_2d {
-    ($v: expr, $p: expr) => {
-        $v[$p.y as usize][$p.x as usize]
-    };
+impl Display for Point2D {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, FromPrimitive)]
 pub enum Direction2D {
     U,
     UR,
@@ -39,6 +43,38 @@ pub enum Direction2D {
     DL,
     L,
     UL,
+}
+
+impl Display for Direction2D {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::U => "↑",
+            Self::UR => "↗",
+            Self::R => "→",
+            Self::DR => "↘",
+            Self::D => "↓",
+            Self::DL => "↙",
+            Self::L => "←",
+            Self::UL => "↖",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl Add for Direction2D {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        FromPrimitive::from_i32((self as i32 + other as i32) % 8).unwrap()
+    }
+}
+
+impl Sub for Direction2D {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        FromPrimitive::from_i32((self as i32 - other as i32) % 8).unwrap()
+    }
 }
 
 impl FromStr for Direction2D {
@@ -60,50 +96,11 @@ impl FromStr for Direction2D {
 
 impl Direction2D {
     pub fn invert(self) -> Self {
-        self.rotate(2)
+        self.rotate(Self::D)
     }
 
-    // + CW, - CCW, 90 deg = 1
-    pub fn rotate(self, n: i32) -> Self {
-        let mut dir = self;
-        for _ in 0..n.rem_euclid(4) {
-            dir = match dir {
-                Self::U => Self::R,
-                Self::UR => Self::DR,
-                Self::R => Self::D,
-                Self::DR => Self::DL,
-                Self::D => Self::L,
-                Self::DL => Self::UL,
-                Self::L => Self::U,
-                Self::UL => Self::UR,
-            }
-        }
-        dir
-    }
-
-    pub fn angle_to(self, other: Self) -> i32 {
-        // TODO: U/UL angles (1/2)
-        match (self, other) {
-            (Self::U, Self::R) => 1,
-            (Self::R, Self::D) => 1,
-            (Self::D, Self::L) => 1,
-            (Self::L, Self::U) => 1,
-            (Self::UR, Self::DR) => 1,
-            (Self::DR, Self::DL) => 1,
-            (Self::DL, Self::UL) => 1,
-            (Self::UL, Self::UR) => 1,
-            (Self::U, Self::D) => 2,
-            (Self::R, Self::L) => 2,
-            (Self::UR, Self::DL) => 2,
-            (Self::DR, Self::UL) => 2,
-            (a, b) => {
-                if a == b {
-                    0
-                } else {
-                    4 - b.angle_to(a)
-                }
-            }
-        }
+    pub fn rotate(self, dir: Self) -> Self {
+        self + dir
     }
 }
 

@@ -209,12 +209,12 @@ fn flood_outer(map: &mut Map, size: (usize, usize), p: Point2D) -> Option<(Point
 
 // get the in direction for outer loop iteration given the outer hint
 fn outer_hint_init_dir(map: &Map, p: Point2D, dir_outer: Dir) -> Dir {
-    let best = dir_outer.rotate(-1);
+    let best = dir_outer.rotate(Dir::L);
     let pipe = at(map, p).unwrap();
     if pipe.goes_dir(best) {
         best.invert()
     } else {
-        best.rotate(-1).invert()
+        best.rotate(Dir::L).invert()
     }
 }
 
@@ -233,7 +233,7 @@ fn loop_outer_detect_clockwise(
         Point2D::new(size.0 as i32, size.1 as i32),
     );
     // outside is on the left, mark adjacent unknown left tiles as outside
-    [dir_out.rotate(-1), dir_in.rotate(-1)]
+    [dir_out.rotate(Dir::L), dir_in.rotate(Dir::L)]
         .iter()
         .for_each(|&dir| {
             cur.step_2d(bound_a, bound_b, dir).map(|p| {
@@ -275,7 +275,7 @@ pub fn main(input: String) {
         Tile::Loop(Pipe::from_dirs((start_a, start_b))),
     );
     println!("start: {:?}", start);
-    println!("start dirs: {:?}", (start_a, start_b));
+    println!("start dirs: {}{}", start_a, start_b);
     let p1 = find_loop(
         &mut map,
         (start.step_2d_unchecked(start_a), start_a),
