@@ -7,7 +7,9 @@ edition = "2021"
 
 [dependencies]
 bit-set = "0.5.3"
+gcollections = "1.5.0"
 hex = "0.4.3"
+intervallum = "1.4.1"
 itertools = "0.12.0"
 nom = "7.1.3"
 num = "0.4.1"
