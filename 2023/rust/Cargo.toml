@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 bit-set = "0.5.3"
+hex = "0.4.3"
 itertools = "0.12.0"
 nom = "7.1.3"
 num = "0.4.1"

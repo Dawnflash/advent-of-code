@@ -122,7 +122,7 @@ impl Add for Point2D {
 
 impl Point2D {
     pub fn new(x: i32, y: i32) -> Self {
-        Self { x: x, y: y }
+        Self { x, y }
     }
 
     pub const fn origin() -> Self {
@@ -138,15 +138,19 @@ impl Point2D {
     }
 
     pub fn step_2d_unchecked(self, dir: Direction2D) -> Self {
+        self.move_2d_unchecked(dir, 1)
+    }
+
+    pub fn move_2d_unchecked(self, dir: Direction2D, n: i32) -> Self {
         match dir {
-            Direction2D::U => Self::new(self.x, self.y - 1),
-            Direction2D::UR => Self::new(self.x + 1, self.y - 1),
-            Direction2D::R => Self::new(self.x + 1, self.y),
-            Direction2D::DR => Self::new(self.x + 1, self.y + 1),
-            Direction2D::D => Self::new(self.x, self.y + 1),
-            Direction2D::DL => Self::new(self.x - 1, self.y + 1),
-            Direction2D::L => Self::new(self.x - 1, self.y),
-            Direction2D::UL => Self::new(self.x - 1, self.y - 1),
+            Direction2D::U => Self::new(self.x, self.y - n),
+            Direction2D::UR => Self::new(self.x + n, self.y - n),
+            Direction2D::R => Self::new(self.x + n, self.y),
+            Direction2D::DR => Self::new(self.x + n, self.y + n),
+            Direction2D::D => Self::new(self.x, self.y + n),
+            Direction2D::DL => Self::new(self.x - n, self.y + n),
+            Direction2D::L => Self::new(self.x - n, self.y),
+            Direction2D::UL => Self::new(self.x - n, self.y - n),
         }
     }
 
