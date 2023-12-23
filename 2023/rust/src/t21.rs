@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 
 use aoc2023::{Direction2D as Dir, Point2D};
 
