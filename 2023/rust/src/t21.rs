@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use aoc2023::{Direction2D as Dir, Point2D};
+use aoc2023::Point2D;
 
 type Map = Vec<Vec<char>>;
 
@@ -41,8 +41,7 @@ fn reachable_in(map: &Map, size: Point2D, start: Point2D, steps: usize) -> usize
     let mut queue2 = HashSet::new();
     for _ in 0..steps {
         for p in queue.drain() {
-            for d in [Dir::U, Dir::D, Dir::L, Dir::R] {
-                let next = p.step_2d_unchecked(d);
+            for next in p.adjacent_cross() {
                 if map[(next.y.rem_euclid(size.y)) as usize][(next.x.rem_euclid(size.x)) as usize]
                     == '.'
                 {
