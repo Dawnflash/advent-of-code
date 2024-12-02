@@ -1,2 +1,10 @@
 dist-newstyle
 target
+.idea
+.DS_Store
+out
+.gradle
+build
+gradle/
+gradlew
+gradlew.bat
