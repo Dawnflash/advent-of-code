@@ -19,7 +19,7 @@ open class Day {
             val test = when (sampleCheck) {
                 "" -> "DONE"
                 result.value -> "PASS"
-                else -> "FAIL"
+                else -> "FAIL (${sampleCheck})"
             }
             println("Sample result [${test} in ${result.duration}]: ${result.value}")
         }
@@ -29,7 +29,7 @@ open class Day {
             val test = when (check) {
                 "" -> "DONE"
                 result.value -> "PASS"
-                else -> "FAIL"
+                else -> "FAIL (${check})"
             }
             println("Result [${test} in ${result.duration}]: ${result.value}")
         } else {
