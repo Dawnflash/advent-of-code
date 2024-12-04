@@ -3,7 +3,6 @@ package cz.dawnflash.aoc2024
 import java.io.File
 import kotlin.time.measureTimedValue
 
-
 open class Day {
     open val sampleChecks = "" to ""
     open val checks = "" to ""

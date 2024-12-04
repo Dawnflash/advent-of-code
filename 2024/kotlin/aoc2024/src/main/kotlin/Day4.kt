@@ -1,6 +1,7 @@
 package cz.dawnflash.aoc2024
 
 import kotlin.math.min
+import cz.dawnflash.aoc2024.util.transpose
 
 class Day4 : Day() {
     override val sampleChecks = "18" to "9"
@@ -35,9 +36,7 @@ class Day4 : Day() {
     override fun solution1(input: List<String>): String {
         val (width, length) = input[0].length to input.size
         val hor = input.sumOf(this::matches)
-        val ver = (0..<width).sumOf { x ->
-            (0..<length).map { y -> input[y][x] }.joinToString("").let(this::matches)
-        }
+        val ver = input.transpose().sumOf(this::matches)
         val dia = diagonals(width, length).sumOf {
             it.map { (x, y) -> input[y][x] }.joinToString("").let(this::matches)
         }
