@@ -37,8 +37,8 @@ open class Day {
             val test = when (check) {
                 "" -> when {
                     notCheck.contains(result.value) -> "FAIL (!= ${result.value})"
-                    intMin != null && intMin >= resultNum -> "FAIL (> $intMin)"
-                    intMax != null && intMax <= resultNum -> "FAIL (< $intMax)"
+                    resultNum != null && intMin != null && intMin >= resultNum -> "FAIL (> $intMin)"
+                    resultNum != null && intMax != null && intMax <= resultNum -> "FAIL (< $intMax)"
                     else -> "DONE"
                 }
 
