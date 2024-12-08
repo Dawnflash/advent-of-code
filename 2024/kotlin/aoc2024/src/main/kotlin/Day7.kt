@@ -1,5 +1,7 @@
 package cz.dawnflash.aoc2024
 
+import cz.dawnflash.aoc2024.Day7.Operator
+
 class Day7 : Day() {
     override val sampleChecks = "3749" to "11387"
     override val checks = "2654749936343" to "124060392153684"
@@ -8,34 +10,28 @@ class Day7 : Day() {
 
     private fun isSolvable(
         eqn: Pair<ULong, List<ULong>>,
-        allowCat: Boolean,
-        fixed: List<Operator> = listOf()
+        ops: Array<Operator>,
+        idx: Int = 1,
+        acc: ULong = eqn.second[0],
     ): Boolean {
-        if (fixed.size == eqn.second.size - 1) {
-            return eqn.first == eqn.second.reduceIndexed { i, acc, r ->
-                when (fixed[i - 1]) {
-                    Operator.ADD -> acc + r
-                    Operator.MUL -> acc * r
-                    Operator.CAT -> "${acc}${r}".toULong()
-                }
-            }
+        if (idx == eqn.second.size) return acc == eqn.first
+        val rhs = eqn.second[idx]
+        return ops.any {
+            isSolvable(eqn, ops, idx + 1, when (it) {
+                Operator.ADD -> acc + rhs
+                Operator.MUL -> acc * rhs
+                Operator.CAT -> "$acc$rhs".toULong()
+            })
         }
-        val base = isSolvable(eqn, allowCat, fixed + Operator.ADD) || isSolvable(eqn, allowCat, fixed + Operator.MUL)
-        if (allowCat && !base) return isSolvable(eqn, true, fixed + Operator.CAT)
-        return base
     }
 
-    override fun solution1(input: List<String>): String {
+    private fun solution(input: List<String>, ops: Array<Operator>): String {
         val parsed = input.map { line ->
             line.split(": ").let { it[0].toULong() to it[1].split(' ').map(String::toULong) }
         }
-        return parsed.filter { isSolvable(it, false) }.sumOf { it.first }.toString()
+        return parsed.filter { isSolvable(it, ops) }.sumOf { it.first }.toString()
     }
 
-    override fun solution2(input: List<String>): String {
-        val parsed = input.map { line ->
-            line.split(": ").let { it[0].toULong() to it[1].split(' ').map(String::toULong) }
-        }
-        return parsed.filter { isSolvable(it, true) }.sumOf { it.first }.toString()
-    }
+    override fun solution1(input: List<String>) = solution(input, arrayOf(Operator.ADD, Operator.MUL))
+    override fun solution2(input: List<String>) = solution(input, arrayOf(Operator.ADD, Operator.MUL, Operator.CAT))
 }
