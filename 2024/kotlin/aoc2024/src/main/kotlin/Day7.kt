@@ -1,7 +1,5 @@
 package cz.dawnflash.aoc2024
 
-import cz.dawnflash.aoc2024.Day7.Operator
-
 class Day7 : Day() {
     override val sampleChecks = "3749" to "11387"
     override val checks = "2654749936343" to "124060392153684"
