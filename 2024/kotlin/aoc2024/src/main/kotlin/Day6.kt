@@ -1,55 +1,52 @@
 package cz.dawnflash.aoc2024
 
-import cz.dawnflash.aoc2024.util.Direction
-import cz.dawnflash.aoc2024.util.Point
-import cz.dawnflash.aoc2024.util.at
-import cz.dawnflash.aoc2024.util.step
+import cz.dawnflash.aoc2024.util.*
 
 class Day6 : Day() {
     override val sampleChecks = "41" to "6"
     override val checks = "5564" to "1976"
 
-    private fun readMap(input: List<String>): Pair<Point, List<List<Boolean>>> {
+    private fun readMap(input: List<String>): Pair<Point, Map2D<Boolean>> {
         var pos: Point = 0 to 0
-        val map = input.mapIndexed { y, line ->
-            line.mapIndexed { x, ch ->
-                when (ch) {
-                    '#' -> true
-                    '^' -> false.also { pos = x to y }
-                    else -> false
+        val map =
+            input.mapIndexed { y, line ->
+                line.mapIndexed { x, ch ->
+                    when (ch) {
+                        '#' -> true
+                        '^' -> false.also { pos = x to y }
+                        else -> false
+                    }
                 }
             }
-        }
-        return pos to map
+        return pos to Map2D(map)
     }
 
     // returns true if out of bounds, false if looped + visited points
     private fun simulate(
-        map: List<List<Boolean>>,
+        map: Map2D<Boolean>,
         start: Point,
         extraObstacle: Point? = null
     ): Pair<Boolean, Set<Point>> {
-        fun isBounded(p: Point) = p.first >= 0 && p.second >= 0 && p.first < map[0].size && p.second < map.size
-
         var direction = Direction.N
         val visited = mutableSetOf(start to direction)
         var pos = start
 
         while (true) {
             val newPos = pos.step(direction)
-            if (!isBounded(newPos)) break
+            if (!map.isInside(newPos)) break
             when {
-                map.at(newPos) || (extraObstacle != null && extraObstacle == newPos) -> direction =
-                    direction.turnRight()
+                map.at(newPos) || (extraObstacle != null && extraObstacle == newPos) ->
+                    direction = direction.turnRight()
 
-                visited.contains(newPos to direction) -> return false to visited.map { it.first }.toSet()
+                visited.contains(newPos to direction) ->
+                    return false to visited.map { it.first }.toSet()
+
                 else -> {
                     visited.add(newPos to direction)
                     pos = newPos
                 }
             }
         }
-
 
         return true to visited.map { it.first }.toSet()
     }
