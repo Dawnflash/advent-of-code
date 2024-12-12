@@ -26,7 +26,7 @@ class Day8 : Day() {
         return ret
     }
 
-    private fun solution(input: List<String>, part2: Boolean): String {
+    override fun solution(input: List<String>, part2: Boolean): String {
         val dims = input[0].length to input.size
         val antennas: Map<Char, List<Point>> = input.flatMapIndexed { y, line ->
             line.mapIndexedNotNull { x, c ->
@@ -44,7 +44,4 @@ class Day8 : Day() {
         }.toSet()
         return antinodes.size.toString()
     }
-
-    override fun solution1(input: List<String>) = solution(input, false)
-    override fun solution2(input: List<String>) = solution(input, true)
 }

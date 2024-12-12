@@ -9,8 +9,9 @@ open class Day {
     open val notChecks: Pair<Array<String>, Array<String>> = arrayOf<String>() to arrayOf()
     open val intervalChecks: Pair<Pair<String, String>, Pair<String, String>> = ("" to "") to ("" to "")
 
-    open fun solution1(input: List<String>) = "???"
-    open fun solution2(input: List<String>) = "???"
+    open fun solution(input: List<String>, part2: Boolean) = "???"
+    open fun solution1(input: List<String>) = solution(input, false)
+    open fun solution2(input: List<String>) = solution(input, true)
     private fun solvePart(part: Int, inputFile: File, sampleFile: File) {
         val sampleCheck = sampleChecks.toList()[part - 1]
         val check = checks.toList()[part - 1]
