@@ -31,7 +31,7 @@ class Day11 : Day() {
         val stones = input[0].split(" ").map(String::toULong).groupingBy { it }
             .fold(0UL) { acc, _ -> acc + 1UL }
 
-        return (1..blinks).fold(stones) { acc, _ -> blink(acc) }.values.sum()
+        return (1..blinks).fold(stones) { acc, _ -> blink(acc).also {println(acc.size)} }.values.sum()
             .toString()
     }
 

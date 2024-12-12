@@ -37,7 +37,7 @@ data class Map2D<T>(val data: List<List<T>>) {
     val w = if (h == 0) 0 else data[0].size
 
     fun at(p: Point): T = data[p.second][p.first]
-    fun atSafe(p: Point): T? = at(p).takeIf { isInside(p) }
+    fun atSafe(p: Point): T? = if (isInside(p)) at(p) else null
     fun isInside(p: Point) = p.first in 0..<w && p.second in 0..<h
     fun dims(): Point = w to h
     fun isValid(): Boolean = data.all { it.size == w }
