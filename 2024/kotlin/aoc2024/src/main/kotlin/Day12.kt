@@ -32,7 +32,7 @@ class Day12 : Day() {
     }
 
     override fun solution(input: List<String>, part2: Boolean): String {
-        val map = Map2D(input.map { it.toCharArray().toList() })
+        val map = Map2D.from(input.map { it.toCharArray().toList() })
         val visited = List(map.h) { MutableList(map.w) { false } }
         return (0..<map.h).sumOf { y ->
             (0..<map.w).sumOf { x ->

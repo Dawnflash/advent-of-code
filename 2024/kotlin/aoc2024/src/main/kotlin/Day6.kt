@@ -18,7 +18,7 @@ class Day6 : Day() {
                     }
                 }
             }
-        return pos to Map2D(map)
+        return pos to Map2D.from(map)
     }
 
     // returns true if out of bounds, false if looped + visited points

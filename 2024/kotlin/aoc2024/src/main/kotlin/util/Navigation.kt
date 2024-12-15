@@ -24,19 +24,30 @@ enum class Direction(val offset: Point) {
     }
 
     companion object {
-        val cardinals = listOf(Direction.N, Direction.E, Direction.S, Direction.W)
-        val diagonals = listOf(Direction.NE, Direction.SE, Direction.SW, Direction.NW)
+        val cardinals = listOf(N, E, S, W)
+        val diagonals = listOf(NE, SE, SW, NW)
+        fun fromChar(c: Char): Direction = when (c) {
+            '>' -> E
+            '<' -> W
+            '^' -> N
+            'v' -> S
+            else -> error("unknown direction")
+        }
     }
 
     fun turnAround() = turnRight().turnRight()
     fun turnLeft() = turnRight().turnRight().turnRight()
 }
 
-data class Map2D<T>(val data: List<List<T>>) {
+open class Map2D<T>(val data: List<MutableList<T>>) {
     val h = data.size
     val w = if (h == 0) 0 else data[0].size
 
     fun at(p: Point): T = data[p.second][p.first]
+    fun set(p: Point, v: T) {
+        data[p.second][p.first] = v
+    }
+
     fun atSafe(p: Point): T? = if (isInside(p)) at(p) else null
     fun isInside(p: Point) = p.first in 0..<w && p.second in 0..<h
     fun dims(): Point = w to h
@@ -48,8 +59,19 @@ data class Map2D<T>(val data: List<List<T>>) {
     fun neighbors(p: Point, dirs: List<Direction>): List<Point> = dirs.mapNotNull { dir ->
         p.step(dir).takeIf { isInside(it) }
     }
+
     fun neighbors4(p: Point) = neighbors(p, Direction.cardinals)
     fun neighbors8(p: Point) = neighbors(p, Direction.entries)
+
+    fun print() = data.forEach { row ->
+        println(row.joinToString(""))
+    }
+
+    companion object {
+        fun <T> from(data: List<List<T>>): Map2D<T> {
+            return Map2D(data.map { it.toMutableList() })
+        }
+    }
 }
 
 operator fun Point.plus(o: Point) = this.first + o.first to this.second + o.second

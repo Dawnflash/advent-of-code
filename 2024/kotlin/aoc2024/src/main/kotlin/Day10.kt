@@ -19,12 +19,12 @@ class Day10 : Day() {
     }
 
     override fun solution1(input: List<String>): String {
-        val map = Map2D(input.map { line -> line.map { it.digitToInt() } })
+        val map = Map2D.from(input.map { line -> line.map { it.digitToInt() } })
         return map.findAll { it == 0 }.sumOf { reachableEnds(map, it).size }.toString()
     }
 
     override fun solution2(input: List<String>): String {
-        val map = Map2D(input.map { line -> line.map { it.digitToInt() } })
+        val map = Map2D.from(input.map { line -> line.map { it.digitToInt() } })
         return map.findAll { it == 0 }.sumOf { numPaths(map, it) }.toString()
     }
 }
