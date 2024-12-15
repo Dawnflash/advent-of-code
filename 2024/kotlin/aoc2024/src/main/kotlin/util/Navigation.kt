@@ -54,5 +54,8 @@ data class Map2D<T>(val data: List<List<T>>) {
 
 operator fun Point.plus(o: Point) = this.first + o.first to this.second + o.second
 operator fun Point.minus(o: Point) = this.first - o.first to this.second - o.second
+operator fun Point.times(o: Int) = this.first * o to this.second * o
+operator fun Point.rem(o: Int) = this.first % o to this.second % o
+operator fun Point.rem(o: Point) = this.first % o.first to this.second % o.second
 fun Point.step(dir: Direction): Point = this.first + dir.offset.first to this.second + dir.offset.second
 fun <T> List<List<T>>.at(p: Point): T = this[p.second][p.first]
