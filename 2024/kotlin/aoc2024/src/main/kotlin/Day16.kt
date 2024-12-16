@@ -4,6 +4,7 @@ import cz.dawnflash.aoc2024.util.Direction
 import cz.dawnflash.aoc2024.util.Map2D
 import cz.dawnflash.aoc2024.util.Point
 import cz.dawnflash.aoc2024.util.step
+import java.util.PriorityQueue
 
 class Day16 : Day() {
     override val sampleChecks = "7036" to "45"
@@ -12,7 +13,12 @@ class Day16 : Day() {
     data class Maze(val map: Map2D<Boolean>) {
         val start = 1 to map.h - 2
         val end = map.w - 2 to 1
+        val graph: HashMap<Point, HashMap<Direction, Triple<Direction, Point, Int>>> = hashMapOf()
         val shortest: HashMap<Point, HashMap<Direction, Int>> = hashMapOf(start to hashMapOf(Direction.E to 0))
+
+        fun next(p: Point, d: Direction) = listOf(d to 0, d.turnLeft() to 1000, d.turnRight() to 1000).filter {
+            !map.at(p.step(it.first))
+        }
     }
 
     private fun parse(input: List<String>): Maze {
@@ -20,21 +26,53 @@ class Day16 : Day() {
         return Maze(Map2D.from(map))
     }
 
-    private fun findShortestPath(maze: Maze) {
-        val stack: MutableList<Pair<Point, Direction>> = mutableListOf()
-        stack.add(maze.start to Direction.E)
-        while (stack.isNotEmpty()) {
-            val (cur, curDir) = stack.removeLast()
-            val nextDirs = listOf(curDir to 0, curDir.turnLeft() to 1000, curDir.turnRight() to 1000)
-            for ((dir, penalty) in nextDirs) {
-                val next = cur.step(dir)
-                val pathLen = 1 + penalty + maze.shortest[cur]!![curDir]!!
-                if (maze.map.at(next)) continue
-                val bestLen = maze.shortest[next]?.get(dir)
-                if (bestLen == null || bestLen > pathLen) {
-                    maze.shortest.getOrPut(next) { HashMap() }[dir] = pathLen
+    private fun buildGraph(maze: Maze, node: Point = maze.start, nodeDir: Direction = Direction.E) {
+        if (node == maze.end) return
+        for ((dir, _) in maze.next(node, nodeDir)) {
+            if (maze.graph[node]?.contains(dir) == true) continue
+            var cur = node.step(dir)
+            var curDir = dir
+            var dist = 1
+            while (true) {
+                val nextDirs = maze.next(cur, curDir)
+                when {
+                    cur == maze.end || nextDirs.size > 1 -> {
+                        // println("$node $nodeDir -> $cur $curDir | $dist")
+                        maze.graph.getOrPut(node) { HashMap() }[dir] = Triple(curDir, cur, dist)
+                        maze.graph.getOrPut(cur) { HashMap() }[curDir.turnAround()] =
+                            Triple(dir.turnAround(), node, dist)
+                        buildGraph(maze, cur, curDir)
+                        break
+                    }
 
-                    if (next != maze.end) stack.add(next to dir)
+                    nextDirs.isEmpty() -> break
+                    else -> {
+                        curDir = nextDirs[0].first
+                        dist += 1 + nextDirs[0].second
+                        cur = cur.step(curDir)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun findShortestPath(maze: Maze) {
+        val heap: PriorityQueue<Pair<Point, Direction>> = PriorityQueue { a, b ->
+            (maze.shortest[a.first]?.minOf { it.value } ?: Int.MAX_VALUE)
+            -(maze.shortest[b.first]?.minOf { it.value } ?: Int.MAX_VALUE)
+        }
+        heap.add(maze.start to Direction.E)
+        while (heap.isNotEmpty()) {
+            val (cur, curDir) = heap.remove()
+            val neighbors = maze.graph[cur]!!
+            for ((dirOut, penalty) in maze.next(cur, curDir)) {
+                val (dirIn, next, nextLen) = neighbors[dirOut] ?: continue
+                val pathLen = penalty + nextLen + maze.shortest[cur]!![curDir]!!
+                val bestLen = maze.shortest[next]?.get(dirIn)
+                if (bestLen == null || bestLen > pathLen) {
+                    maze.shortest.getOrPut(next) { HashMap() }[dirIn] = pathLen
+
+                    if (next != maze.end) heap.add(next to dirIn)
                 }
             }
         }
@@ -48,49 +86,36 @@ class Day16 : Day() {
     ): Set<Point> {
         points.add(cur)
         if (cur == maze.start) return points
-        val options = maze.shortest[cur]!!
-        if (egressDir == null) {
-            val min = options.values.min()
-            options.filter { it.value == min }.keys.forEach {
-                optimalSpots(maze, cur.step(it.turnAround()), it, points)
+        val options = maze.shortest[cur]!!.map {
+            it.key to when {
+                egressDir == null || it.key == egressDir -> it.value
+                else -> it.value + 1000 // add turn penalty
             }
-        } else {
-            val adjOptions = options.map {
-                it.key to when (it.key) {
-                    egressDir -> it.value
-                    else -> it.value + 1000
-                }
+        }
+        val min = options.minOfOrNull { it.second }
+        options.filter { it.second == min }.forEach {
+            var dir = it.first.turnAround()
+            var next = cur.step(dir)
+            while (!maze.shortest.contains(next)) {
+                points.add(next)
+                dir = maze.next(next, dir)[0].first
+                next = next.step(dir)
             }
-            val min = adjOptions.minOfOrNull { it.second }
-            adjOptions.filter { it.second == min }.forEach {
-                optimalSpots(maze, cur.step(it.first.turnAround()), it.first, points)
-            }
+            optimalSpots(maze, next, dir.turnAround(), points)
         }
         return points
     }
 
-    private fun printMaze(maze: Maze) {
-        val optPath = optimalSpots(maze)
-        val map = maze.map.data.mapIndexed { y, line ->
-            line.mapIndexed { x, it ->
-                when {
-                    it -> '#'
-                    optPath.contains(x to y) -> 'O'
-                    else -> '.'
-                }
-            }
-        }
-        Map2D.from(map).print()
-    }
-
     override fun solution1(input: List<String>): String {
         val maze = parse(input)
+        buildGraph(maze)
         findShortestPath(maze)
         return maze.shortest[maze.end]!!.values.min().toString()
     }
 
     override fun solution2(input: List<String>): String {
         val maze = parse(input)
+        buildGraph(maze)
         findShortestPath(maze)
         return optimalSpots(maze).size.toString()
     }
