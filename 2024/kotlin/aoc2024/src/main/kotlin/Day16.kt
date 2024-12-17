@@ -1,9 +1,6 @@
 package cz.dawnflash.aoc2024
 
-import cz.dawnflash.aoc2024.util.Direction
-import cz.dawnflash.aoc2024.util.Map2D
-import cz.dawnflash.aoc2024.util.Point
-import cz.dawnflash.aoc2024.util.step
+import cz.dawnflash.aoc2024.util.*
 import java.util.PriorityQueue
 
 class Day16 : Day() {
@@ -18,6 +15,12 @@ class Day16 : Day() {
 
         fun next(p: Point, d: Direction) = listOf(d to 0, d.turnLeft() to 1000, d.turnRight() to 1000).filter {
             !map.at(p.step(it.first))
+        }
+
+        fun distFromOrigin(p: Point) = shortest[p]?.minOf { it.value }
+        fun estimatedPathLen(p: Point) = when(val d = distFromOrigin(p)) {
+            null -> Int.MAX_VALUE
+            else -> d + p.distanceFrom(end)
         }
     }
 
@@ -58,8 +61,7 @@ class Day16 : Day() {
 
     private fun findShortestPath(maze: Maze) {
         val heap: PriorityQueue<Pair<Point, Direction>> = PriorityQueue { a, b ->
-            (maze.shortest[a.first]?.minOf { it.value } ?: Int.MAX_VALUE)
-            -(maze.shortest[b.first]?.minOf { it.value } ?: Int.MAX_VALUE)
+            maze.estimatedPathLen(a.first) - maze.estimatedPathLen(b.first)
         }
         heap.add(maze.start to Direction.E)
         while (heap.isNotEmpty()) {
@@ -110,7 +112,7 @@ class Day16 : Day() {
         val maze = parse(input)
         buildGraph(maze)
         findShortestPath(maze)
-        return maze.shortest[maze.end]!!.values.min().toString()
+        return maze.distFromOrigin(maze.end).toString()
     }
 
     override fun solution2(input: List<String>): String {

@@ -1,5 +1,7 @@
 package cz.dawnflash.aoc2024.util
 
+import kotlin.math.abs
+
 typealias Point = Pair<Int, Int>
 
 enum class Direction(val offset: Point) {
@@ -81,3 +83,4 @@ operator fun Point.rem(o: Int) = this.first % o to this.second % o
 operator fun Point.rem(o: Point) = this.first % o.first to this.second % o.second
 fun Point.step(dir: Direction): Point = this.first + dir.offset.first to this.second + dir.offset.second
 fun <T> List<List<T>>.at(p: Point): T = this[p.second][p.first]
+fun Point.distanceFrom(o: Point): Int = abs(o.first - this.first) + abs(o.second - this.second)
