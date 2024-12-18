@@ -65,8 +65,16 @@ open class Map2D<T>(val data: List<MutableList<T>>) {
     fun neighbors4(p: Point) = neighbors(p, Direction.cardinals)
     fun neighbors8(p: Point) = neighbors(p, Direction.entries)
 
-    fun print() = data.forEach { row ->
-        println(row.joinToString(""))
+    fun print(transform: (T) -> String = { it.toString() }) = data.forEach { row ->
+        println(row.joinToString("", transform = transform))
+    }
+
+    fun toGraph(isFree: (T) -> Boolean): Graph<Point> {
+        val vertices = findAll { isFree(it) }.toSet()
+        val edges = vertices.associateWith { v ->
+            neighbors4(v).filter { isFree(at(it)) }.map { it to 1.0 }
+        }
+        return Graph(vertices, edges)
     }
 
     companion object {
