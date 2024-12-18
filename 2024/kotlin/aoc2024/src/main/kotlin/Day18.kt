@@ -7,8 +7,7 @@ import kotlin.math.max
 
 class Day18 : Day() {
     override val sampleChecks = "22" to "6,1"
-    override val checks = "270" to ""
-    override val notChecks = arrayOf("") to arrayOf("2871")
+    override val checks = "270" to "51,40"
 
     private fun parse(input: List<String>): Pair<Map2D<Boolean>, List<Point>> {
         val pts = input.map { line -> line.split(",").let { it[0].toInt() to it[1].toInt() } }
@@ -24,6 +23,20 @@ class Day18 : Day() {
         return map.toGraph { !it }.shortestPathLength(start, end) { it.distanceFrom(end).toDouble() }?.toInt()
     }
 
+    // finds the first value in a closed interval satisfying a predicate
+    private fun binSearch(bounds: Point, predicate: (Int) -> Boolean): Int {
+        var (low, high) = bounds
+        while (low < high) {
+            val mid = (low + high) / 2
+            if (predicate(mid)) {
+                high = mid
+            } else {
+                low = mid + 1
+            }
+        }
+        return low
+    }
+
     override fun solution1(input: List<String>): String {
         val (map, bytes) = parse(input)
         val steps = if (map.w <= 7) 12 else 1024
@@ -33,7 +46,9 @@ class Day18 : Day() {
     override fun solution2(input: List<String>): String {
         val (map, bytes) = parse(input)
         val steps = if (map.w <= 7) 12 else 1024
-        val cutoff = (steps..bytes.size).find { minPathAfter(map, bytes, it) == null }!!
+        val cutoff = binSearch(steps to bytes.size) {
+            minPathAfter(map, bytes, it) == null
+        }
         return bytes[cutoff - 1].let { "${it.first},${it.second}" }
     }
 }
