@@ -70,10 +70,10 @@ open class Map2D<T>(val data: List<MutableList<T>>) {
     }
 
     fun toGraph(isFree: (T) -> Boolean): Graph<Point> {
-        val vertices = findAll { isFree(it) }.toSet()
-        val edges = vertices.associateWith { v ->
+        val vertices = findAll { isFree(it) }.toHashSet()
+        val edges = HashMap(vertices.associateWith { v ->
             neighbors4(v).filter { isFree(at(it)) }.map { it to 1.0 }
-        }
+        })
         return Graph(vertices, edges)
     }
 
@@ -92,3 +92,12 @@ operator fun Point.rem(o: Point) = this.first % o.first to this.second % o.secon
 fun Point.step(dir: Direction): Point = this.first + dir.offset.first to this.second + dir.offset.second
 fun <T> List<List<T>>.at(p: Point): T = this[p.second][p.first]
 fun Point.distanceFrom(o: Point): Int = abs(o.first - this.first) + abs(o.second - this.second)
+fun Point.neighborhood(min: Int, max: Int): List<Point> {
+    return (this.first - max..this.first + max).flatMap { x ->
+        (this.second - max..this.second + max).map { y ->
+            val p = x to y
+            val d = p.distanceFrom(this)
+            p.takeIf { d in min..max }
+        }
+    }.filterNotNull()
+}

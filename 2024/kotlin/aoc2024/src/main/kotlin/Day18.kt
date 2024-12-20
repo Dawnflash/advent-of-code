@@ -20,7 +20,7 @@ class Day18 : Day() {
         bytes.subList(0, steps).forEach { map.set(it, true) }
         val start = 0 to 0
         val end = map.w - 1 to map.h - 1
-        return map.toGraph { !it }.shortestPathLength(start, end) { it.distanceFrom(end).toDouble() }?.toInt()
+        return map.toGraph { !it }.shortestPath(start, end) { it.distanceFrom(end).toDouble() }?.first?.toInt()
     }
 
     // finds the first value in a closed interval satisfying a predicate
