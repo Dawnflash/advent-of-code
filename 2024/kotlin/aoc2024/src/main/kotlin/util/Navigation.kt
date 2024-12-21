@@ -37,6 +37,14 @@ enum class Direction(val offset: Point) {
         }
     }
 
+    override fun toString() = when(this) {
+        N -> "^"
+        S -> "v"
+        E -> ">"
+        W -> "<"
+        else -> error("unknown char mapping")
+    }
+
     fun turnAround() = turnRight().turnRight()
     fun turnLeft() = turnRight().turnRight().turnRight()
 }
