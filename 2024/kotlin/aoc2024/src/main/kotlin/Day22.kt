@@ -19,30 +19,20 @@ class Day22 : Day() {
     }
 
     override fun solution2(input: List<String>): String {
-        val bananas = input.map { l -> (1..2000).runningFold(l.toLong()) { acc, _ -> gen(acc) }.map { it % 10 } }
-        val diffs = bananas.map { gen -> gen.windowed(2).map { it[1] - it[0] } }
+        val seqCounter = hashMapOf<List<Long>, Long>()
         val visited = hashSetOf<List<Long>>()
-        val seqMaps: List<HashMap<List<Long>, Long>> = diffs.mapIndexed { m, diff ->
+        for (line in input) {
+            val bananas = (1..2000).runningFold(line.toLong()) { acc, _ -> gen(acc) }.map { it % 10 }
+            val diffs = bananas.windowed(2).map { it[1] - it[0] }
             visited.clear()
-            HashMap(diff.windowed(4).mapIndexedNotNull { i, seq ->
+            for ((i, seq) in diffs.windowed(4).withIndex()) {
                 if (seq !in visited) {
                     visited.add(seq)
-                    seq to bananas[m][i + 4]
-                } else null
-            }.toMap())
-        }
-        visited.clear()
-        val best = seqMaps.mapNotNull { monkey ->
-            monkey.keys.mapNotNull { seq ->
-                if (seq in visited) {
-                    null
-                } else {
-                    visited.add(seq)
-                    seqMaps.sumOf { it.getOrDefault(seq, 0L) }
+                    seqCounter[seq] = seqCounter.getOrDefault(seq, 0L) + bananas[i + 4]
                 }
-            }.maxOrNull()
-        }.maxOrNull()
+            }
+        }
 
-        return best.toString()
+        return seqCounter.values.max().toString()
     }
 }
