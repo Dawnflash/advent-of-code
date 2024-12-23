@@ -5,14 +5,7 @@ import kotlin.math.abs
 typealias Point = Pair<Int, Int>
 
 enum class Direction(val offset: Point) {
-    N(0 to -1),
-    NE(1 to -1),
-    E(1 to 0),
-    SE(1 to 1),
-    S(0 to 1),
-    SW(-1 to 1),
-    W(-1 to 0),
-    NW(-1 to -1);
+    N(0 to -1), NE(1 to -1), E(1 to 0), SE(1 to 1), S(0 to 1), SW(-1 to 1), W(-1 to 0), NW(-1 to -1);
 
     fun turnRight() = when (this) {
         N -> E
@@ -37,7 +30,7 @@ enum class Direction(val offset: Point) {
         }
     }
 
-    override fun toString() = when(this) {
+    override fun toString() = when (this) {
         N -> "^"
         S -> "v"
         E -> ">"
@@ -77,13 +70,9 @@ open class Map2D<T>(val data: List<MutableList<T>>) {
         println(row.joinToString("", transform = transform))
     }
 
-    fun toGraph(isFree: (T) -> Boolean): Graph<Point> {
-        val vertices = findAll { isFree(it) }.toHashSet()
-        val edges = HashMap(vertices.associateWith { v ->
-            neighbors4(v).filter { isFree(at(it)) }.map { it to 1.0 }
-        })
-        return Graph(vertices, edges)
-    }
+    fun toGraph(isFree: (T) -> Boolean): Graph<Point> = Graph(HashMap(findAll { isFree(it) }.associateWith { v ->
+        neighbors4(v).filter { isFree(at(it)) }.associateWith { 1.0 }
+    }))
 
     companion object {
         fun <T> from(data: List<List<T>>): Map2D<T> {

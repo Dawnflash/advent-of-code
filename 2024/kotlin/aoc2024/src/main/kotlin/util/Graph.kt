@@ -5,7 +5,7 @@ import kotlin.collections.HashMap
 
 // represents a directed weighted graph G=(V,E) with vertices of type V
 // edges are weighted by Doubles and stored as a neighbor hashmap
-class Graph<V>(val vertices: HashSet<V>, val edges: HashMap<V, List<Pair<V, Double>>>) {
+class Graph<V>(val edges: Map<V, Map<V, Double>>) {
     companion object {
         fun <V> buildPath(from: Map<V, V>, start: V, end: V): List<V> {
             val path = mutableListOf(end)
@@ -16,7 +16,13 @@ class Graph<V>(val vertices: HashSet<V>, val edges: HashMap<V, List<Pair<V, Doub
             }
             return path
         }
+
+        fun <V> fromUnweighted(from: Map<V, List<V>>): Graph<V> = Graph(from.map { e ->
+            e.key to e.value.associateWith { 1.0 }
+        }.toMap())
     }
+
+    fun hasEdge(from: V, to: V): Boolean = edges[from]?.contains(to) ?: false
 
     fun shortestPath(start: V, end: V, estimator: (V) -> Double): Pair<Double, List<V>>? {
         val res = aStar(start, end, estimator) ?: return null
@@ -31,7 +37,7 @@ class Graph<V>(val vertices: HashSet<V>, val edges: HashMap<V, List<Pair<V, Doub
         // g-score
         val distances = HashMap<V, Double>()
         // f-score = g-score + estimator
-        val estimates = HashMap<V, Double>(vertices.associateWith { Double.MAX_VALUE })
+        val estimates = HashMap<V, Double>(edges.keys.associateWith { Double.MAX_VALUE })
         val from = HashMap<V, V>()
         val heap = PriorityQueue<V> { a, b ->
             estimates[a]!!.compareTo(estimates[b]!!)
